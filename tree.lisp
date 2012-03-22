@@ -27,11 +27,19 @@
 (defparameter pretty-tree-horiz-space 2) ; this should be at least 1
 (defparameter pretty-tree-height-mult 2) ; this should probably be at least 2
 
-(defparameter pretty-tree-horiz-char #\-)
-(defparameter pretty-tree-vert-char #\|)
-(defparameter pretty-tree-left-corner-char #\/)
-(defparameter pretty-tree-right-corner-char #\\)
-(defparameter pretty-tree-node-char #\*)
+;;; unicode set
+(defparameter pretty-tree-horiz-char #\─)
+(defparameter pretty-tree-vert-char #\│)
+(defparameter pretty-tree-left-corner-char #\╭)
+(defparameter pretty-tree-right-corner-char #\╮)
+(defparameter pretty-tree-node-char #\●)
+
+;;; ascii set
+;; (defparameter pretty-tree-horiz-char #\-)
+;; (defparameter pretty-tree-vert-char #\|)
+;; (defparameter pretty-tree-left-corner-char #\+)
+;; (defparameter pretty-tree-right-corner-char #\+)
+;; (defparameter pretty-tree-node-char #\^)
 
 (defun tree-total-width (tree)
   (if (listp tree)
