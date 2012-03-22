@@ -30,6 +30,7 @@
 ;;; unicode set
 (defparameter pretty-tree-horiz-char #\─)
 (defparameter pretty-tree-vert-char #\│)
+(defparameter pretty-tree-vert-end-char #\│)
 (defparameter pretty-tree-left-corner-char #\╭)
 (defparameter pretty-tree-right-corner-char #\╮)
 (defparameter pretty-tree-node-char #\●)
@@ -37,6 +38,7 @@
 ;;; ascii set
 ;; (defparameter pretty-tree-horiz-char #\-)
 ;; (defparameter pretty-tree-vert-char #\|)
+;; (defparameter pretty-tree-vert-end-char #\|)
 ;; (defparameter pretty-tree-left-corner-char #\+)
 ;; (defparameter pretty-tree-right-corner-char #\+)
 ;; (defparameter pretty-tree-node-char #\^)
@@ -103,7 +105,7 @@
 (defun tree-total-height (tree)
   (1+ (* (tree-total-edge-height tree) pretty-tree-height-mult)))
 
-(defun pretty-print-tree (tree output)
+(defun pretty-print-tree (output tree)
   "Pretty prints a tree."
   (let ((matrix (make-array
                  (list (tree-total-height tree)
@@ -146,12 +148,18 @@
               pretty-tree-right-corner-char) ;right end of right line
         
         ;; vertical lines
-        (loop for j from (1+ top) to (+ top lh -1) do
+        (loop for j from (1+ top) to (+ top lh -2) do
              (setf (aref matrix j (+ left ls))
                    pretty-tree-vert-char)) ;left line
-        (loop for j from (1+ top) to (+ top rh -1) do
+        (when (> lh 1)
+          (setf (aref matrix (+ top lh -1) (+ left ls))
+                pretty-tree-vert-end-char)) ;left end
+        (loop for j from (1+ top) to (+ top rh -2) do
              (setf (aref matrix j (+ left ls le 2 re))
                    pretty-tree-vert-char)) ;right line
+        (when (> rh 1)
+          (setf (aref matrix (+ top rh -1) (+ left ls le 2 re))
+                pretty-tree-vert-end-char)) ;right end
         
         ;; print children
         (put-tree-in-matrix (left-child tree) (+ top lh) left matrix)
