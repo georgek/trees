@@ -5,4 +5,5 @@
   :licence "GNU GPLv3"
   :serial t
   :components ((:file "packages")
-               (:file "tree")))
+               (:file "tree")
+               (:file "build")))
