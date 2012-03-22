@@ -1,0 +1,8 @@
+(asdf:defsystem "gk-trees"
+  :description "Building trees stuff."
+  :version "0.1"
+  :author "George Kettleborough"
+  :licence "GNU GPLv3"
+  :serial t
+  :components ((:file "packages")
+               (:file "tree")))
