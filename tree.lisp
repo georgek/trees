@@ -1,5 +1,24 @@
 (in-package :gk-trees)
 
+(defparameter pretty-tree-horiz-space 1) ; this should be at least 0
+(defparameter pretty-tree-height-mult 2) ; this should be at least 1
+
+;;; unicode set
+(defparameter pretty-tree-horiz-char #\─)
+(defparameter pretty-tree-vert-char #\│)
+(defparameter pretty-tree-vert-end-char #\│)
+(defparameter pretty-tree-left-corner-char #\╭)
+(defparameter pretty-tree-right-corner-char #\╮)
+(defparameter pretty-tree-node-char #\●)
+
+;;; ascii set
+;; (defparameter pretty-tree-horiz-char #\-)
+;; (defparameter pretty-tree-vert-char #\|)
+;; (defparameter pretty-tree-vert-end-char #\|)
+;; (defparameter pretty-tree-left-corner-char #\+)
+;; (defparameter pretty-tree-right-corner-char #\+)
+;; (defparameter pretty-tree-node-char #\^)
+
 (defun make-proper-cherry (a ra b rb)
   "Makes a proper cherry with values a,b edge weights ra, rb."
   `((,a ,b) . (,ra ,rb)))
@@ -58,25 +77,6 @@
 
 (defun last-edge-weight (tree)
   (car (last (cdr tree))))
-
-(defparameter pretty-tree-horiz-space 1) ; this should be at least 0
-(defparameter pretty-tree-height-mult 2) ; this should be at least 1
-
-;;; unicode set
-(defparameter pretty-tree-horiz-char #\─)
-(defparameter pretty-tree-vert-char #\│)
-(defparameter pretty-tree-vert-end-char #\│)
-(defparameter pretty-tree-left-corner-char #\╭)
-(defparameter pretty-tree-right-corner-char #\╮)
-(defparameter pretty-tree-node-char #\●)
-
-;;; ascii set
-;; (defparameter pretty-tree-horiz-char #\-)
-;; (defparameter pretty-tree-vert-char #\|)
-;; (defparameter pretty-tree-vert-end-char #\|)
-;; (defparameter pretty-tree-left-corner-char #\+)
-;; (defparameter pretty-tree-right-corner-char #\+)
-;; (defparameter pretty-tree-node-char #\^)
 
 (defun tree-total-width (tree)
   (cond ((cherry-binaryp tree)
