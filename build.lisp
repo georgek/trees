@@ -5,9 +5,12 @@
 
 ;;; returns list of leaf nodes
 (defun leafset (tree)
-  (if (listp tree)
-      (append (leafset (left-child tree)) (leafset (right-child tree)))
-      (list tree)))
+  (cond
+    ((listp tree)
+     (loop for child in (car tree) append
+          (leafset child)))
+    (t
+     (list tree))))
 
 ;;; returns list choose 3
 (defun choose3 (list)
