@@ -7,8 +7,8 @@
 (defun make-cherry (&rest args)
   "Makes a cherry with values and edge weights given. Arguments should be of
   the form (val . weight)"
-  (when (< (length args) 2)
-    (error "A cherry must have at least two children!"))
+  (when (< (length args) 1)
+    (error "A cherry must have at least one child!"))
   (let ((cherry (cons nil nil)))
     (loop for p in args do
          (setf (car cherry) (cons (car p) (car cherry)))
@@ -17,9 +17,13 @@
     (nreverse (cdr cherry))
     cherry))
 
-(defun cherry-binaryp (cherry)
-  (and (listp cherry)
-       (endp (cddar cherry))))
+(defun vertex-degree (vertex)
+  (if (listp vertex)
+      (1+ (length (car vertex)))
+      1))
+
+(defun cherry-binaryp (vertex)
+  (= (vertex-degree vertex) 3))
 
 (defun make-ultrametric-triplet (a b c ab ac)
   "Makes an ultrametric triplet ab|c with the edge weight given."
@@ -43,8 +47,20 @@
 (defun right-edge-weight (tree)
   (second (cdr tree)))
 
-(defparameter pretty-tree-horiz-space 0) ; this should be at least 0
-(defparameter pretty-tree-height-mult 1) ; this should be at least 1
+(defun nth-child (n tree)
+  (nth n (car tree)))
+
+(defun nth-edge-weight (n tree)
+  (nth n (cdr tree)))
+
+(defun last-child (tree)
+  (car (last (car tree))))
+
+(defun last-edge-weight (tree)
+  (car (last (cdr tree))))
+
+(defparameter pretty-tree-horiz-space 1) ; this should be at least 0
+(defparameter pretty-tree-height-mult 2) ; this should be at least 1
 
 ;;; unicode set
 (defparameter pretty-tree-horiz-char #\─)
@@ -68,6 +84,8 @@
             (tree-total-width (right-child tree))
             (* pretty-tree-horiz-space 2)
             1))
+        ((= (vertex-degree tree) 2)
+         (tree-total-width (nth-child 0 tree)))
         ((listp tree)
          (1+ (loop for v in (car tree) summing
                   (1+ (length (format nil "~a" v))))))
@@ -75,33 +93,54 @@
          (length (format nil "~a" tree)))))
 
 ;;; extent is the the length of the horizontal line between the node and the
-;;; vertical bar
+;;; vertical bar (only for binary)
 (defun tree-left-extent (tree)
-  (if (cherry-binaryp (left-child tree))
-      (+ (tree-total-width (right-child (left-child tree)))
-         (* pretty-tree-horiz-space 2))
-      (+ (floor (/ (1- (tree-total-width (left-child tree))) 2))
-         pretty-tree-horiz-space)))
+  (cond
+    ((cherry-binaryp (left-child tree))
+     (+ (tree-total-width (right-child (left-child tree)))
+        (* pretty-tree-horiz-space 2)))
+    ((= (vertex-degree (left-child tree)) 2)
+     (+
+      (tree-right-space (left-child tree))
+      pretty-tree-horiz-space))
+    (t
+     (+ (floor (/ (1- (tree-total-width (left-child tree))) 2))
+          pretty-tree-horiz-space))))
 
 (defun tree-right-extent (tree)
-  (if (cherry-binaryp (right-child tree))
-      (+ (tree-total-width (left-child (right-child tree)))
-         (* pretty-tree-horiz-space 2))
-      (+ (ceiling (/ (1- (tree-total-width (right-child tree))) 2))
-         pretty-tree-horiz-space)))
+  (cond
+    ((cherry-binaryp (right-child tree))
+     (+ (tree-total-width (left-child (right-child tree)))
+        (* pretty-tree-horiz-space 2)))
+    ((= (vertex-degree (right-child tree)) 2)
+     (+
+      (tree-left-space (right-child tree))
+      pretty-tree-horiz-space))
+    (t
+     (+ (ceiling (/ (1- (tree-total-width (right-child tree))) 2))
+        pretty-tree-horiz-space))))
 
-;;; space is the amount of space between the left/right edge of the bounding box of the tree to the vertical line
+;;; space is the amount of space between the left/right edge of the bounding
+;;; box of the tree to the vertical line
 (defun tree-left-space (tree)
-  (if (cherry-binaryp (left-child tree))
-      (+ (tree-total-width (left-child (left-child tree)))
-         pretty-tree-horiz-space)
-      (ceiling (/ (1- (tree-total-width (left-child tree))) 2))))
+  (cond
+    ((cherry-binaryp (nth-child 0 tree))
+     (+ (tree-total-width (left-child (nth-child 0 tree)))
+        pretty-tree-horiz-space))
+    ((= (vertex-degree (nth-child 0 tree)) 2)
+     (tree-left-space (nth-child 0 tree)))
+    (t
+     (ceiling (/ (1- (tree-total-width (nth-child 0 tree))) 2)))))
 
 (defun tree-right-space (tree)
-  (if (cherry-binaryp (right-child tree))
-      (+ (tree-total-width (right-child (right-child tree)))
-         pretty-tree-horiz-space)
-      (floor (/ (1- (tree-total-width (right-child tree))) 2))))
+  (cond
+    ((cherry-binaryp (last-child tree))
+     (+ (tree-total-width (right-child (last-child tree)))
+        pretty-tree-horiz-space))
+    ((= (vertex-degree (last-child tree)) 2)
+     (tree-right-space (last-child tree)))
+    (t
+     (floor (/ (1- (tree-total-width (right-child tree))) 2)))))
 
 ;;; this just makes sure the widths agree for a tree
 (defun tree-width-test (tree)
@@ -117,12 +156,16 @@
 ;;; total height of tree is longest path from root to a leaf in terms of edge
 ;;; weights
 (defun tree-total-edge-height (tree)
-  (if (listp tree)
-      (max (+ (left-edge-weight tree)
-              (tree-total-edge-height (left-child tree)))
-           (+ (right-edge-weight tree)
-              (tree-total-edge-height (right-child tree))))
-      0))
+  (cond ((cherry-binaryp tree)
+         (max (+ (left-edge-weight tree)
+                 (tree-total-edge-height (left-child tree)))
+              (+ (right-edge-weight tree)
+                 (tree-total-edge-height (right-child tree)))))
+        ((= (vertex-degree tree) 2)
+         (+ (nth-edge-weight 0 tree)
+            (tree-total-edge-height (nth-child 0 tree))))
+        (t
+         0)))
 
 ;;; total height of pretty printed tree
 (defun tree-total-height (tree)
@@ -134,7 +177,7 @@
                  (list (tree-total-height tree)
                        (tree-total-width tree))
                  :initial-element #\Space)))
-    
+
     ;; fill the matrix
     (put-tree-in-matrix tree 0 0 matrix)
     
@@ -189,8 +232,25 @@
            (put-tree-in-matrix (right-child tree) (+ top rh)
                                (+ left node 1 pretty-tree-horiz-space)
                                matrix)))
+        ((= (vertex-degree tree) 2)
+         ;; a degree two internal node
+         (let* ((node (tree-left-space tree))
+                (h (* (nth-edge-weight 0 tree) pretty-tree-height-mult)))
+           ;; node
+           (setf (aref matrix top (+ left node))
+                 pretty-tree-node-char)
+           ;; vertical line
+           (loop for j from (1+ top) to (+ top h -2) do
+                (setf (aref matrix j (+ left node))
+                      pretty-tree-vert-char)) ;line
+           (when (> h 1)
+             (setf (aref matrix (+ top h -1) (+ left node))
+                   pretty-tree-vert-end-char)) ;end
+           
+           ;; print child
+           (put-tree-in-matrix (nth-child 0 tree) (+ top h) left matrix)))
         ((listp tree)
-         ;; it's a non-binary node
+         ;; it's a node with n>2 children (unresolved)
          (let ((str (format nil "{~{~a~^,~}}" (car tree))))
            (loop for i from 0 to (1- (length str)) do
                 (setf (aref matrix top (+ left i)) (elt str i)))))
