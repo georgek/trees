@@ -52,7 +52,6 @@
                 (loop with node = (left-child tree)
                    and len = 0
                    while (= (vertex-degree node) 2) do
-                   (pretty-print-tree t node)
                    (setf len (+ len (nth-edge-weight 0 node)))
                    (setf node (nth-child 0 node))
                    finally (return len))
