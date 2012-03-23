@@ -46,8 +46,17 @@
      (let ((le (left-edge-weight tree))
            (re (right-edge-weight tree)))
        (when (= (vertex-degree (left-child tree)) 2)
-         ;; left child will be suppressed so add up edge weights
-         (setf le (+ le (nth-edge-weight 0 (left-child tree)))))
+         ;; left child will be suppressed so add up chain of edge weights
+         (setf le
+               (+
+                (loop with node = (left-child tree)
+                   and len = 0
+                   while (= (vertex-degree node) 2) do
+                   (pretty-print-tree t node)
+                   (setf len (+ len (nth-edge-weight 0 node)))
+                   (setf node (nth-child 0 node))
+                   finally (return len))
+                le)))
        (when (= (vertex-degree (right-child tree)) 2)
          ;; right child will be suppressed
          (setf re (+ re (nth-edge-weight 0 (right-child tree)))))
