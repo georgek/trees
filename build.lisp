@@ -81,21 +81,21 @@
          ((and members-in-left members-in-right)
           ;; we keep this binary node
           (make-proper-cherry
-           (tree-restrict-to (left-child tree) leaves test)
+           (tree-remove-all-except (left-child tree) leaves test)
            (left-edge-weight tree)
-           (tree-restrict-to (right-child tree) leaves test)
+           (tree-remove-all-except (right-child tree) leaves test)
            (right-edge-weight tree)))
          (members-in-left
           ;; we keep only the left bit
           (make-cherry
            (cons
-            (tree-restrict-to (left-child tree) leaves test)
+            (tree-remove-all-except (left-child tree) leaves test)
             (left-edge-weight tree))))
          (members-in-right
           ;; we keep only the right bit
           (make-cherry
            (cons
-            (tree-restrict-to (right-child tree) leaves test)
+            (tree-remove-all-except (right-child tree) leaves test)
             (right-edge-weight tree))))
          (t
           nil))))
