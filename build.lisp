@@ -108,6 +108,8 @@
    (tree-remove-all-except tree leaves test)))
 
 ;;; returns list of all triplets displayed by tree
-(defun triplets (tree)
-  
-  )
+(defun tree-all-triplets (tree)
+  (let ((triples (choose3 (leafset tree))))
+    (loop for triple in triples collecting
+         (tree-restrict-to tree triple))))
+
