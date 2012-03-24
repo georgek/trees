@@ -193,7 +193,8 @@
     (loop while tree-list do
          ;; pop off as many as possible
          (let ((this-row nil)
-               (total-width 0))
+               (total-width 0)
+               (horiz-space (max pretty-tree-horiz-space 1)))
            (loop while tree-list do
                 (if (< (+ total-width (tree-total-width (car tree-list)) 1)
                        80)
@@ -201,7 +202,7 @@
                       (setf total-width
                             (+ total-width
                                (tree-total-width (car tree-list))
-                               pretty-tree-horiz-space))
+                               horiz-space))
                       (setf this-row (cons (car tree-list) this-row))
                       (setf tree-list (cdr tree-list)))
                     (return)))
@@ -218,17 +219,12 @@
                   (put-tree-in-matrix tree 0 current-pos matrix)
                   (setf current-pos (+ current-pos
                                        (tree-total-width tree)
-                                       pretty-tree-horiz-space)))
+                                       horiz-space)))
              ;; print the matrix out
              (loop for i from 0 to (1- total-height) do
                   (loop for j from 0 to (1- total-width) do
                        (format output "~a" (aref matrix i j)))
-                  (format output "~%"))
-             )
-           )
-         )
-    )
-  )
+                  (format output "~%")))))))
 
 ;;; this writes the tree into matrix recursively with its "canvas" beginning
 ;;; at top left
