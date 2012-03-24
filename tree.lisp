@@ -32,8 +32,8 @@
     (loop for p in args do
          (setf (car cherry) (cons (car p) (car cherry)))
          (setf (cdr cherry) (cons (cdr p) (cdr cherry))))
-    (nreverse (car cherry))
-    (nreverse (cdr cherry))
+    (setf (car cherry) (nreverse (car cherry)))
+    (setf (cdr cherry) (nreverse (cdr cherry)))
     cherry))
 
 (defun vertex-degree (vertex)
