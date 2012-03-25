@@ -34,6 +34,9 @@
 (defun tree-any-membersp (tree leaves &optional (test #'equal))
   (some #'(lambda (leaf) (tree-memberp tree leaf test)) leaves))
 
+(defun tree-all-membersp (tree leaves &optional (test #'equal))
+  (every #'(lambda (leaf) (tree-memberp tree leaf test)) leaves))
+
 ;;; this returns the tree with any degree one vertices removed
 (defun tree-suppress-degree-twos (tree)
   (cond
