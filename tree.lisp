@@ -46,6 +46,12 @@
 (defun cherry-binaryp (vertex)
   (= (vertex-degree vertex) 3))
 
+(defun tripletp (tree)
+  (and (cherry-binaryp tree)
+       (not (and (listp (left-child tree)) (listp (right-child tree))))
+       (or (cherry-binaryp (left-child tree))
+           (cherry-binaryp (right-child tree)))))
+
 (defun make-ultrametric-triplet (a b c ab ac)
   "Makes an ultrametric triplet ab|c with the edge weight given."
   (when (>= ab ac)
@@ -58,7 +64,7 @@
 
 ;;; returns the two leaves of the cherry in a triplet
 (defun triplet-get-cherry (triplet)
-  (when (not (cherry-binaryp triplet))
+  (when (not (tripletp triplet))
     (error "Not a triplet!"))
   (cond
     ((and (not (listp (left-child triplet)))
