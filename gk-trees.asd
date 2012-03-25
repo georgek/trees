@@ -6,4 +6,5 @@
   :serial t
   :components ((:file "packages")
                (:file "tree")
-               (:file "build")))
+               (:file "build")
+               (:file "lasso")))
