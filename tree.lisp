@@ -19,6 +19,8 @@
 ;; (defparameter pretty-tree-right-corner-char #\+)
 ;; (defparameter pretty-tree-node-char #\^)
 
+(defparameter tree-default-weight 1)
+
 (defun make-proper-cherry (a ra b rb)
   "Makes a proper cherry with values a,b edge weights ra, rb."
   `((,a ,b) . (,ra ,rb)))
@@ -53,6 +55,22 @@
    (- (/ ac 2) (/ ab 2))
    c
    (/ ac 2)))
+
+;;; returns the two leaves of the cherry in a triplet
+(defun triplet-get-cherry (triplet)
+  (when (not (cherry-binaryp triplet))
+    (error "Not a triplet!"))
+  (cond
+    ((and (not (listp (left-child triplet)))
+          (cherry-binaryp (right-child triplet)))
+     (list (left-child (right-child triplet))
+           (right-child (right-child triplet))))
+    ((and (not (listp (right-child triplet)))
+          (cherry-binaryp (left-child triplet)))
+     (list (left-child (left-child triplet))
+           (right-child (left-child triplet))))
+    (t
+     (error "Not triplet!"))))
 
 (defun left-child (tree)
   (first (car tree)))
