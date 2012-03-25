@@ -115,22 +115,20 @@
     (loop for triple in triples collecting
          (tree-restrict-to tree triple))))
 
+(defun restrict-triplets-to (triplets leaves &optional (test #'equal))
+  (remove-if-not #'tripletp
+                 (loop for triplet in triplets collecting
+                      (tree-restrict-to triplet leaves test))))
+
 ;;; uses BUILD algorithm to build a supertree from the given trees if they are
 ;;; compatible and if they are not it returns NIL
-(defun build (trees)
-  (let ((triplets
-         (remove-duplicates
-          (loop for tree in trees append
-               (tree-all-triplets tree))
-          :test #'equalp))
-        (tree
-         (loop with l = () for tree in trees do
-              (setf l (union l (leafset tree)))
-              finally (return l)))
-        (graph nil))
-    
-    ;; initialise graph
-    (setf graph (loop for l in tree collecting (list l)))
+(defun build-from-triplets (triplets)
+  (let* ((tree
+          (loop with l = () for triplet in triplets do
+               (setf l (union l (leafset triplet)))
+             finally (return l)))
+         (graph
+          (loop for l in tree collecting (list l))))
     
     ;; connect graph
     (loop with cherry and to-merge
@@ -148,15 +146,23 @@
       (error "Trees are not compatible!"))
     
     (setf tree graph)
-    (loop with restricted-trees
+    (loop with restricted-triplets
        for child on tree do
-         (when (> (length (car child)) 1)
-             (setf restricted-trees
-                   (loop for tree in trees collecting
-                        (tree-restrict-to tree (car child))))
-             (setf (car child) (build restricted-trees)))
-         (when (= (length (car child)) 1)
-           (setf (car child) (caar child))))
+         (cond
+           ((> (length (car child)) 2)  ; try to resolve this further
+            (setf restricted-triplets (restrict-triplets-to triplets (car child)))
+            (setf (car child) (build-from-triplets restricted-triplets)))
+           ((= (length (car child)) 2)  ; proper cherry
+            (setf (car child) (cons (car child)
+                                    (make-list (length (car child))
+                                               :initial-element tree-default-weight))))
+           (t                           ; single leaf
+            (setf (car child) (caar child)))))
 
     (cons tree (make-list (length tree) :initial-element tree-default-weight))))
+
+(defun build (trees)
+  (build-from-triplets
+   (loop for tree in trees append
+        (tree-all-triplets tree))))
 
