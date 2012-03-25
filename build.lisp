@@ -112,3 +112,50 @@
     (loop for triple in triples collecting
          (tree-restrict-to tree triple))))
 
+;;; uses BUILD algorithm to build a supertree from the given trees if they are
+;;; compatible and if they are not it returns NIL
+(defun build (trees)
+  (let ((triplets
+         (remove-duplicates
+          (loop for tree in trees append
+               (tree-all-triplets tree))
+          :test #'equalp))
+        (tree
+         (loop with l = () for tree in trees do
+              (setf l (union l (leafset tree)))
+              finally (return l)))
+        (graph nil))
+    
+    ;; initialise graph
+    (setf graph (loop for l in tree collecting (list l)))
+    (format t "Graph before connecting: ~a~%" graph)
+    
+    ;; connect graph
+    (loop with cherry and to-merge
+       for triplet in triplets do
+         (setf cherry (triplet-get-cherry triplet))
+         (setf to-merge (remove-if-not #'(lambda (l) (or (member (first cherry) l)
+                                                         (member (second cherry) l)))
+                                       graph))
+         (when (> (length to-merge) 1)
+           (loop for merge in to-merge do
+                (setf graph (delete merge graph :test #'equalp)))
+           (setf graph (cons (loop for m in to-merge append m) graph))))
+    (format t "Graph after connecting: ~a~%" graph)
+    
+    (when (< (length graph) 2)
+      (error "Trees are not compatible!"))
+    
+    (setf tree graph)
+    (loop with restricted-trees
+       for child on tree do
+         (when (> (length (car child)) 1)
+             (setf restricted-trees
+                   (loop for tree in trees collecting
+                        (tree-restrict-to tree (car child))))
+             (setf (car child) (build restricted-trees)))
+         (when (= (length (car child)) 1)
+           (setf (car child) (caar child))))
+
+    (cons tree (make-list (length tree) :initial-element tree-default-weight))))
+
