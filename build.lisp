@@ -20,22 +20,22 @@
                  (list (car one) (car two) (car three))))))
 
 ;;; checks if leaf is member of tree
-(defun tree-memberp (tree leaf &optional (test #'equal))
+(defun tree-member (tree leaf &optional (test #'equal))
   (cond ((cherry-binaryp tree)
          (or
-          (tree-memberp (left-child tree) leaf test)
-          (tree-memberp (right-child tree) leaf test)))
+          (tree-member (left-child tree) leaf test)
+          (tree-member (right-child tree) leaf test)))
         ((listp tree)
          (member leaf (car tree) :test test))
         (t
          (funcall test leaf tree))))
 
 ;;; returns T if any one of the supplied leaves is in tree
-(defun tree-any-membersp (tree leaves &optional (test #'equal))
-  (some #'(lambda (leaf) (tree-memberp tree leaf test)) leaves))
+(defun tree-any-members (tree leaves &optional (test #'equal))
+  (some #'(lambda (leaf) (tree-member tree leaf test)) leaves))
 
-(defun tree-all-membersp (tree leaves &optional (test #'equal))
-  (every #'(lambda (leaf) (tree-memberp tree leaf test)) leaves))
+(defun tree-all-members (tree leaves &optional (test #'equal))
+  (every #'(lambda (leaf) (tree-member tree leaf test)) leaves))
 
 ;;; this returns the tree with any degree one vertices removed
 (defun tree-suppress-degree-twos (tree)
@@ -75,9 +75,9 @@
   (cond
     ((cherry-binaryp tree)
      ;; this is a resolved node
-     (let ((members-in-left (tree-any-membersp 
+     (let ((members-in-left (tree-any-members 
                              (left-child tree) leaves test))
-           (members-in-right (tree-any-membersp
+           (members-in-right (tree-any-members
                               (right-child tree) leaves test)))
        (cond
          ((and members-in-left members-in-right)
