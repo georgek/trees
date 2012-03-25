@@ -131,7 +131,6 @@
     
     ;; initialise graph
     (setf graph (loop for l in tree collecting (list l)))
-    (format t "Graph before connecting: ~a~%" graph)
     
     ;; connect graph
     (loop with cherry and to-merge
@@ -144,7 +143,6 @@
            (loop for merge in to-merge do
                 (setf graph (delete merge graph :test #'equalp)))
            (setf graph (cons (loop for m in to-merge append m) graph))))
-    (format t "Graph after connecting: ~a~%" graph)
     
     (when (< (length graph) 2)
       (error "Trees are not compatible!"))
