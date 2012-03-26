@@ -240,7 +240,9 @@
                                  total-width)
                            :initial-element #\Space)))
              (loop for tree in this-row do
-                  (put-tree-in-matrix tree 0 current-pos matrix)
+                  (put-tree-in-matrix
+                   tree (- total-height (tree-total-height tree))
+                   current-pos matrix)
                   (setf current-pos (+ current-pos
                                        (tree-total-width tree)
                                        horiz-space)))
