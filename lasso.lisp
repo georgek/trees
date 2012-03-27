@@ -14,30 +14,45 @@
   (cdr cord))
 
 (defun cord-intersection (cord1 cord2 &optional (test #'equal))
-  (intersection (list (caar cord1) (cdar cord1)) (list (caar cord2) (cdar cord2)) :test test))
+  (intersection
+   (list (caar cord1) (cdar cord1))
+   (list (caar cord2) (cdar cord2))
+   :test test))
 
 (defun cord-exclusive-or (cord1 cord2 &optional (test #'equal))
-  (set-exclusive-or (list (caar cord1) (cdar cord1)) (list (caar cord2) (cdar cord2)) :test test))
+  (set-exclusive-or
+   (list (caar cord1) (cdar cord1))
+   (list (caar cord2) (cdar cord2))
+   :test test))
 
 (defun cord-difference (cord1 cord2 &optional (test #'equal))
-  (set-difference (list (caar cord1) (cdar cord1)) (list (caar cord2) (cdar cord2)) :test test))
+  (set-difference
+   (list (caar cord1) (cdar cord1))
+   (list (caar cord2) (cdar cord2))
+   :test test))
 
 ;;; this returns all cords which span this tree
 (defun restrict-cords-to-tree (tree cords)
   (union
    (intersection
     (remove-if-not
-     #'(lambda (cord) (tree-all-members (left-child tree) (list (cord-left cord))))
+     #'(lambda
+           (cord)
+         (tree-all-members (left-child tree) (list (cord-left cord))))
      cords)
     (remove-if-not
-     #'(lambda (cord) (tree-all-members (right-child tree) (list (cord-right cord))))
+     #'(lambda
+           (cord)
+         (tree-all-members (right-child tree) (list (cord-right cord))))
      cords))
    (intersection
     (remove-if-not
-     #'(lambda (cord) (tree-all-members (right-child tree) (list (cord-left cord))))
+     #'(lambda(cord)
+         (tree-all-members (right-child tree) (list (cord-left cord))))
      cords)
     (remove-if-not
-     #'(lambda (cord) (tree-all-members (left-child tree) (list (cord-right cord))))
+     #'(lambda(cord)
+         (tree-all-members (left-child tree) (list (cord-right cord))))
      cords))))
 
 (defun ultrametric-distance-to-bottom (tree)
@@ -56,7 +71,9 @@
              (new-right-child
               (ultrametric-tree-set-weights (right-child tree) cords))
              (distance-to-bottom
-              (/ (cord-length (first (restrict-cords-to-tree tree cords))) 2)))
+              (/
+               (cord-length (first (restrict-cords-to-tree tree cords)))
+               2)))
          (make-proper-cherry
           new-left-child
           (- distance-to-bottom
@@ -75,9 +92,11 @@
     ;; assemble triplets
     (loop with shorter-cords
        for cord in cords do
-         (setf shorter-cords (remove-if
-                              #'(lambda (c) (>= (cord-length c) (cord-length cord)))
-                              cords))
+         (setf
+          shorter-cords
+          (remove-if
+           #'(lambda (c) (>= (cord-length c) (cord-length cord)))
+           cords))
          (loop for shorter-cord in shorter-cords
             for i = (cord-intersection shorter-cord cord)
             and ld = (cord-difference shorter-cord cord)
@@ -85,17 +104,17 @@
               (cond
                 ((= (length i) 1)
                  (setf triplets
-                       (cons (make-ultrametric-triplet (car ld) (car i) (car rd)
-                                                       (cord-length shorter-cord)
-                                                       (cord-length cord))
-                             triplets)))
+                       (cons
+                        (make-ultrametric-triplet
+                         (car ld) (car i) (car rd)
+                         (cord-length shorter-cord)
+                         (cord-length cord))
+                        triplets)))
                 (t
                  nil))))
     (pretty-print-trees t triplets)
     
     (setf tree (build-from-triplets triplets))
     
-    (ultrametric-tree-set-weights tree cords)
-    )
-  )
+    (ultrametric-tree-set-weights tree cords)))
 

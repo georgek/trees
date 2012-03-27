@@ -133,10 +133,15 @@
     ;; connect graph
     (loop with cherry and to-merge
        for triplet in triplets do
-         (setf cherry (triplet-get-cherry triplet))
-         (setf to-merge (remove-if-not #'(lambda (l) (or (member (first cherry) l)
-                                                         (member (second cherry) l)))
-                                       graph))
+         (setf
+          cherry
+          (triplet-get-cherry triplet))
+         (setf
+          to-merge
+          (remove-if-not
+           #'(lambda (l) (or (member (first cherry) l)
+                             (member (second cherry) l)))
+           graph))
          (when (> (length to-merge) 1)
            (loop for merge in to-merge do
                 (setf graph (delete merge graph :test #'equalp)))
@@ -150,16 +155,22 @@
        for child on tree do
          (cond
            ((> (length (car child)) 2)  ; try to resolve this further
-            (setf restricted-triplets (restrict-triplets-to triplets (car child)))
+            (setf
+             restricted-triplets
+             (restrict-triplets-to triplets (car child)))
             (setf (car child) (build-from-triplets restricted-triplets)))
            ((= (length (car child)) 2)  ; proper cherry
-            (setf (car child) (cons (car child)
-                                    (make-list (length (car child))
-                                               :initial-element tree-default-weight))))
+            (setf
+             (car child)
+             (cons (car child)
+                   (make-list (length (car child))
+                              :initial-element tree-default-weight))))
            (t                           ; single leaf
             (setf (car child) (caar child)))))
 
-    (cons tree (make-list (length tree) :initial-element tree-default-weight))))
+    (cons
+     tree
+     (make-list (length tree) :initial-element tree-default-weight))))
 
 (defun build (trees)
   (build-from-triplets
