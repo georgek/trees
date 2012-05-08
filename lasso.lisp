@@ -84,7 +84,7 @@
       (t
        tree))))
 
-(defun ultrametric-lasso (cords)
+(defun ultrametric-lasso (&rest cords)
   "Lassos an ultrametric tree from the given cords.  A cord, ab=d should be of
   the form ((a . b) . d)."
   (let ((triplets nil)
