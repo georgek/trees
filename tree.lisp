@@ -314,7 +314,7 @@
            
            ;; print child
            (put-tree-in-matrix (nth-child 0 tree) (+ top h) left matrix)))
-        ((listp tree)
+        ((consp tree)
          ;; it's a node with n>2 children (unresolved)
          (let ((str (format nil "{~{~a~^,~}}" (car tree))))
            (loop for i from 0 to (1- (length str)) do
