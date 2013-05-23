@@ -7,4 +7,6 @@
   :components ((:file "packages")
                (:file "tree")
                (:file "build")
-               (:file "lasso")))
+               (:file "lasso")
+               (:file "gamma-graph")
+               (:file "hamiltonian")))
