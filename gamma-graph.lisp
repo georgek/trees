@@ -58,9 +58,10 @@ undefined."
   (list v1 v2))
 
 (defun first-path (graph)
-  (let ((vertices (gamma-vertices graph)))
-    (path (first vertices)
-          (first (gamma-adjacent-vertices graph (first vertices))))))
+  (let* ((vertices (gamma-vertices graph))
+         (first (nth (random (length vertices)) vertices))
+         (adjacent (gamma-adjacent-vertices graph first)))
+    (path first (nth (random (length adjacent)) adjacent))))
 
 (defun path-start (path)
   (car path))
@@ -121,7 +122,7 @@ undefined."
                             (let ((adj (set-difference
                                         (gamma-adjacent-vertices graph c)
                                         (nth s Q))))
-                              (when adj
+                              (when (consp adj)
                                 (setf P (append 
                                          P (list (cycle-extend (nth s Q)
                                                                c (first adj)))))
