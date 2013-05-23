@@ -145,7 +145,7 @@
          (when (> (length to-merge) 1)
            (loop for merge in to-merge do
                 (setf graph (delete merge graph :test #'equalp)))
-           (setf graph (cons (loop for m in to-merge append m) graph))))
+           (setf graph (cons (apply #'append to-merge) graph))))
     
     (when (< (length graph) 2)
       (error "Trees are not compatible!"))
