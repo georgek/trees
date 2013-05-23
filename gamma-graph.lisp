@@ -21,6 +21,10 @@ undefined."
                  :test #'ctest))))
     graph))
 
+(defmacro make-graph (&rest edges)
+  (let ((cords (loop for e in edges collecting `(cord ',(car e) ',(cadr e) 1))))
+    `(make-gamma-graph (list ,@cords))))
+
 (defun edge-eq (e1 e2 &key (test #'eq))
   (or (and (funcall test (car e1) (car e2))
            (funcall test (cdr e1) (cdr e2)))
