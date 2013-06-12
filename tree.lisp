@@ -81,14 +81,26 @@
 (defun left-child (tree)
   (first (car tree)))
 
+(defun (setf left-child) (left-child tree)
+  (setf (first (car tree)) left-child))
+
 (defun right-child (tree)
   (second (car tree)))
+
+(defun (setf right-child) (right-child tree)
+  (setf (second (car tree)) right-child))
 
 (defun left-edge-weight (tree)
   (first (cdr tree)))
 
+(defun (setf left-edge-weight) (edge-weight tree)
+  (setf (first (cdr tree)) edge-weight))
+
 (defun right-edge-weight (tree)
   (second (cdr tree)))
+
+(defun (setf right-edge-weight) (edge-weight tree)
+  (setf (second (cdr tree)) edge-weight))
 
 (defun nth-child (n tree)
   (nth n (car tree)))
@@ -190,6 +202,9 @@
             (tree-total-edge-height (nth-child 0 tree))))
         (t
          0)))
+
+(defun tree-height (tree)
+  (tree-total-edge-height tree))
 
 ;;; total height of pretty printed tree
 (defun tree-total-height (tree)
