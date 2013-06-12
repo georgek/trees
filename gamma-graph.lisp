@@ -40,7 +40,7 @@ undefined."
 (defun gamma-vertices (graph)
   "Returns list of all vertices."
   (let ((vertices (list)))
-    (maphash #'(lambda (k v) (push k vertices)) graph)
+    (maphash #'(lambda (k v) (declare (ignore v)) (push k vertices)) graph)
     vertices))
 
 (defun gamma-edges (graph)
