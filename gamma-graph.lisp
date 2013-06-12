@@ -22,7 +22,9 @@ undefined."
     graph))
 
 (defmacro make-graph (&rest edges)
-  (let ((cords (loop for e in edges collecting `(cord ',(car e) ',(cadr e) 1))))
+  (let ((cords (loop for e in edges collecting `(cord ',(car e)
+                                                      ',(cadr e)
+                                                      ,(caddr e)))))
     `(make-gamma-graph (list ,@cords))))
 
 (defun edge-eq (e1 e2 &key (test #'eq))
@@ -114,7 +116,13 @@ undefined."
                     (format t "x: ~a~%" x)
                     (cond
                       ;; extension
-                      ((not (member x (nth s Q)))
+                      ((and (not (member x (nth s Q)))
+                            (/= (gamma-edge-weight
+                                 graph (nth i w) x)
+                                (gamma-edge-weight
+                                 graph (nth i w)
+                                 (car (path-adjacent (nth s Q)
+                                                     (nth i w))))))
                        (format t "extend: ~a~%" (nth s Q))
                        (setf P (append P (list (extend-path (nth s Q) x i))))
                        (incf k)
@@ -140,8 +148,7 @@ undefined."
                        (setf deltas
                              (append deltas
                                      (list (1+ (nth s deltas)))))))))
-              (incf s)
-              )))))
+              (incf s))))))
 
 (defun cycle-extend (cycle u v)
   "Extend cycle to path using edge (u,v) where u is in cycle and v is not."
