@@ -181,8 +181,42 @@ start or 1 = end."
       (rotate-path-end path u)))
 
 (defun graph-T (graph)
+  "Used as maximum search depth by HAM algorithm."
   (let* ((m (length (gamma-edges graph)))
          (n (length (gamma-vertices graph)))
          (d (* 2 (/ m n))))
     (+ (/ (log n 2) (- (log d 2) (log (log d 2) 2))) 1)))
 
+(defun build-binary-from-path (path graph)
+  (let* ((tree (first path))
+         (last (first path))
+         (current-weight 0)
+         )
+    (loop for leaf in (rest path) do
+         (setf current-weight (/ (gamma-edge-weight graph leaf last) 2))
+         (cond ((> current-weight (tree-height tree))
+                (setf tree (make-proper-cherry leaf current-weight
+                                               tree (- current-weight
+                                                       (tree-height tree)))))
+               ((< current-weight (tree-height tree))
+                ;; search down left side to find largest subtree with height <
+                ;; (last will always be leftmost)
+                (let ((subtree tree)
+                      subtree-height)
+                  (loop while (< current-weight
+                                 (tree-height (left-child subtree))) do
+                       (setf subtree (left-child subtree)))
+                  (setf subtree-height (tree-height subtree))
+                  (setf (left-child subtree)
+                        (make-proper-cherry leaf current-weight
+                                            (left-child subtree)
+                                            (- current-weight
+                                               (tree-height
+                                                (left-child subtree)))))
+                  (setf (left-edge-weight subtree)
+                        (- subtree-height
+                           (tree-height (left-child subtree))))))
+               (t
+                (error "Path is an invalid lasso (equal sequential weights).")))
+         (setf last leaf))
+    tree))
