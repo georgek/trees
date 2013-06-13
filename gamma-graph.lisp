@@ -128,7 +128,8 @@ undefined."
                        (incf k)
                        (go L1))
                       ;; cycle extension
-                      ((eq x (nth (- 1 i) w))
+                      ((and (eq x (nth (- 1 i) w))
+                            (can-cycle-extend-p (nth s Q) graph))
                        (format t "cycle extend: ~a~%" (nth s Q))
                        (loop for c in (nth s Q) do
                             (let ((adj (set-difference
@@ -149,6 +150,20 @@ undefined."
                              (append deltas
                                      (list (1+ (nth s deltas)))))))))
               (incf s))))))
+
+(defun can-cycle-extend-p (cycle graph)
+  "Returns false if it will not be possible to cycle extend this cycle based
+on the edge weights."
+  (let* ((head (first cycle))
+         (tail (car (last cycle)))
+         (midw (gamma-edge-weight graph head tail)))
+    (and midw
+         (/= midw
+             (gamma-edge-weight graph head
+                                (car (path-adjacent cycle head))))
+         (/= midw
+             (gamma-edge-weight graph tail
+                                (car (path-adjacent cycle tail)))))))
 
 (defun cycle-extend (cycle u v)
   "Extend cycle to path using edge (u,v) where u is in cycle and v is not."
