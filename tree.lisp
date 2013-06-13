@@ -340,3 +340,17 @@
            (loop for i from 0 to (1- (length str)) do
                 (setf (aref matrix top (+ left i)) (elt str i)))))))
 
+(defmacro utree (form)
+  "Makes an ultrametric tree."
+  (cond ((consp form)
+         `(make-cherry ,@(mapcar (lambda (f) `(cons (utree ,f)
+                                                    ,(if (consp f)
+                                                         (- (first form)
+                                                            (first f))
+                                                         (first form))))
+                                 (rest form))))
+        ((symbolp form)
+         `(quote ,form))
+        (t
+         form)))
+
