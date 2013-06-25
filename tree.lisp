@@ -354,3 +354,26 @@
         (t
          form)))
 
+(defun range (beg end)
+  "Returns range of numbers between beg and end."
+  (assert (<= beg end))
+  (loop for i from beg to end collecting i))
+
+(defun make-random-binary (x)
+  "Makes a random binary tree with leafset X"
+  (let ((n (length x))
+        a b h)
+    (loop while (> n 1) do
+         (setf a (nth (random n) x))
+         (setf x (remove a x :test #'equal))
+         (setf n (length x))
+         (setf b (nth (random n) x))
+         (setf x (remove b x :test #'equal))
+         (setf n (length x))
+         (setf h (1+ (max (tree-height a) (tree-height b))))
+         (setf x (append x (list (make-proper-cherry a
+                                                     (- h (tree-height a))
+                                                     b
+                                                     (- h (tree-height b))))))
+         (incf n))
+    (car x)))
