@@ -12,3 +12,11 @@
            (decf amount))
          (decf n))
     (nreverse result)))
+
+(defun mess-up-cords (cords rem vary)
+  "Messes up cords by removing the proportion REM and varying lengths by
+  proportion VARY"
+  (let* ((n (length cords))
+         (nrem (round (* n rem))))
+    (select-random cords (- n nrem))))
+
