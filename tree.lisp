@@ -377,3 +377,20 @@
                                                      (- h (tree-height b))))))
          (incf n))
     (car x)))
+
+(defun tree-distances (tree)
+  "Returns list of every pairwise distance in tree"
+  (let* ((cords (list))
+         (h (tree-height tree))
+         (children (car tree)))
+    (loop for lchild on children do
+         (loop for rchild on (rest lchild) do
+              (setf cords
+                    (append cords
+                            (loop for l in (leafset (car lchild)) append
+                                 (loop for r in (leafset (car rchild)) collect
+                                      (cord l r (* h 2))))))))
+    (loop for child in children do
+         (when (consp child)
+          (setf cords (append cords (tree-distances child)))))
+    cords))
