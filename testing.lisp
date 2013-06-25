@@ -2,3 +2,13 @@
 
 (defparameter bg (make-gamma-graph (list (cord 'a 'b 2) (cord 'b 'c 4) (cord 'a 'e 6) (cord 'c 'e 6) (cord 'd 'e 2) (cord 'c 'f 8) (cord 'b 'g 8) (cord 'a 'h 12) (cord 'f 'h 12) (cord 'c 'i 12) (cord 'f 'i 12) (cord 'd 'j 12) (cord 'e 'j 12) (cord 'g 'j 12) (cord 'h 'j 10) (cord 'b 'k 12) (cord 'i 'k 10))))
 
+(defun select-random (list amount)
+  "Returns AMOUNT random elements from LIST"
+  (let ((result (list))
+        (n (length list)))
+    (loop for item in list do
+         (when (< (random n) amount)    ; chance amount/n
+           (setf result (cons item result))
+           (decf amount))
+         (decf n))
+    (nreverse result)))
