@@ -5,6 +5,7 @@
   :licence "GNU GPLv3"
   :serial t
   :components ((:file "packages")
+               (:file "utils")
                (:file "tree")
                (:file "build")
                (:file "lasso")
