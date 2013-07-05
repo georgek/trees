@@ -75,12 +75,26 @@ undefined."
 (defun path-end (path)
   (car (last path)))
 
+(defun path-edge-weights (path graph)
+  (remove nil (maplist (lambda (c) (if (cdr c)
+                                       (gamma-edge-weight graph (car c) (cadr c))
+                                       nil))
+                       path)))
+
 (defun path-adjacent (path elt)
   (let ((last nil))
     (loop for nc on path do
          (when (eq (car nc) elt)
            (return (remove-if #'null (list last (cadr nc)))))
          (setf last (car nc)))))
+
+(defun cycle-adjacent (cycle elt)
+  (let ((adj (path-adjacent cycle elt)))
+    (when (= (length adj) 1)
+      (if (eq elt (path-start cycle))
+          (setf adj (nconc adj (list (path-end cycle))))
+          (setf adj (nconc (list (path-start cycle)) adj))))
+    adj))
 
 (defun extend-path-start (path elt)
   (cons elt path))
