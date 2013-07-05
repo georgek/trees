@@ -4,6 +4,9 @@
   "Makes a cord ab=d."
   (cons (cons a b) d))
 
+(defmacro ucord (a b)
+  `(cord ',a ',b 1))
+
 (defun cord-left (cord)
   (caar cord))
 
@@ -12,6 +15,21 @@
 
 (defun cord-length (cord)
   (cdr cord))
+
+(defun cords-equal (cord1 cord2 &optional (test #'eq))
+  (or (and (funcall test (cord-left cord1) (cord-left cord2))
+           (funcall test (cord-right cord1) (cord-right cord2)))
+      (and (funcall test (cord-left cord1) (cord-right cord2))
+           (funcall test (cord-right cord1) (cord-left cord2)))))
+
+(defun cords-vertices (cords)
+  (remove-duplicates (nconc (mapcar #'cord-left cords)
+                            (mapcar #'cord-right cords))
+                     :test #'eq))
+
+(defun cord-contains-p (cord vertex)
+  (or (eq (cord-left cord) vertex)
+      (eq (cord-right cord) vertex)))
 
 (defun cord-intersection (cord1 cord2 &optional (test #'equal))
   (intersection
@@ -118,3 +136,39 @@
     
     (ultrametric-tree-set-weights tree cords)))
 
+(defun b-remove-if (test list)
+  (let ((removed (remove-if test list)))
+    (values removed (set-difference list removed))))
+
+(defun component (cords vertex)
+  (dbg :component "cords: ~A~%v: ~A~%" cords vertex)
+  (multiple-value-bind (rest component)
+      (b-remove-if (lambda (c) (cord-contains-p c vertex)) cords)
+    (dbg :component "comp: ~A~%rest: ~A~%" component rest)
+    (loop for cord in component do
+         (setf component (union component (component rest
+                                                     (if (eq vertex
+                                                             (cord-left cord))
+                                                         (cord-right cord)
+                                                         (cord-left cord))))))
+    (values component (set-difference cords component))))
+
+(defun components (cords)
+  "Returns a list of lists of cords which are connected."
+  (let ((components (list)))
+    (loop while (consp cords) do
+         (multiple-value-bind (component rest)
+             (component cords (cord-left (first cords)))
+           (push component components)
+           (setf cords rest)))
+    components))
+
+(defun complete-p (cords)
+  "Returns true if graph is complete."
+  (let ((n (length (cords-vertices cords)))
+        (m (length (remove-duplicates cords :test #'cords-equal))))
+    (= m (/ (* n (- n 1)) 2))))
+
+(defun ultrametric-lasso2 (cords)
+  
+  )
