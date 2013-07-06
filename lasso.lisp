@@ -178,6 +178,51 @@
         (m (length (remove-duplicates cords :test #'cords-equal))))
     (= m (/ (* n (- n 1)) 2))))
 
+(defun collapse (cords)
+  (let ((height (cord-length (first cords)))
+        (vertices (list)))
+    (assert (every (lambda (c) (= height (cord-length c))) cords))
+    (loop for cord in cords do
+         (setf vertices (union vertices (list (cord-left cord)
+                                              (cord-right cord)))))
+    (cons vertices
+          (mapcar (lambda (v) (- (/ height 2) (tree-height v))) vertices))))
+
 (defun ultrametric-lasso2 (cords)
-  
-  )
+  (let (tree)
+    (loop while (consp cords)
+       for min = (reduce #'min cords :key #'cord-length)
+       do
+         (multiple-value-bind (mins rest)
+             (b-remove-if (lambda (c) (/= (cord-length c) min)) cords)
+           (setf cords rest)
+           (loop for component in (components mins) do
+                (unless (complete-p component)
+                  (dbg :lasso2 "Not a clique: ~A~%" component)
+                  (return-from ultrametric-lasso2 nil))
+                (setf tree (collapse component))
+                (pretty-print-tree t tree)
+                (let ((other-leaves (make-hash-table :test #'eq))
+                      other-leaf)
+                  (loop for cord in cords do
+                       (cond ((consp (intersection (leafset (cord-left cord))
+                                                   (leafset tree)))
+                              (setf other-leaf #'cord-right)
+                              (setf (cord-left cord) tree))
+                             ((consp (intersection (leafset (cord-right cord))
+                                                   (leafset tree)))
+                              (setf other-leaf #'cord-left)
+                              (setf (cord-right cord) tree))
+                             (t
+                              (setf other-leaf nil)))
+                       (when (functionp other-leaf)
+                        (if (gethash (funcall other-leaf cord) other-leaves)
+                            (unless (= (gethash (funcall other-leaf cord)
+                                                other-leaves)
+                                       (cord-length cord))
+                              (dbg :lasso2 "Not ultrametric.~%")
+                              (return-from ultrametric-lasso2 nil))
+                            (setf (gethash (funcall other-leaf cord) other-leaves)
+                                  (cord-length cord)))))
+                  (setf cords (remove-duplicates cords :test #'cords-equal))))))
+    tree))
