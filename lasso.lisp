@@ -10,11 +10,20 @@
 (defun cord-left (cord)
   (caar cord))
 
+(defun (setf cord-left) (cord-left cord)
+  (setf (caar cord) cord-left))
+
 (defun cord-right (cord)
   (cdar cord))
 
+(defun (setf cord-right) (cord-right cord)
+  (setf (cdar cord) cord-right))
+
 (defun cord-length (cord)
   (cdr cord))
+
+(defun (setf cord-length) (cord-length cord)
+  (setf (cdr cord) cord-length))
 
 (defun cords-equal (cord1 cord2 &optional (test #'eq))
   (or (and (funcall test (cord-left cord1) (cord-left cord2))
