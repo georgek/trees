@@ -18,3 +18,6 @@
   (setf *dbg-ids* (if (null ids) nil
                       (set-difference *dbg-ids* ids))))
 
+(defun dbg-on-p (id)
+  (member id *dbg-ids*))
+
