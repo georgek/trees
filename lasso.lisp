@@ -188,6 +188,35 @@
     (cons vertices
           (mapcar (lambda (v) (- (/ height 2) (tree-height v))) vertices))))
 
+(defun shuffle (list)
+  "Incorrect shuffle, but good enough."
+  (sort list #'> :key (lambda (x) (random 1.0))))
+
+(defun maxi-clique (cords)
+  "Returns the maximal clique containing the start vertex."
+  (let* ((vertices (sort (shuffle (cords-vertices cords))
+                         #'> :key (lambda (c) (length (leafset c)))))
+         (cords (copy-list cords))
+         (clique-vertices (list (pop vertices)))
+         (clique-cords (list)))
+    (loop while (consp vertices)
+       for potential = (pop vertices) do
+         (multiple-value-bind (rest join-cords)
+             (b-remove-if (lambda (c) (or (and (eq (cord-left c) potential)
+                                               (member (cord-right c)
+                                                       clique-vertices
+                                                       :test #'eq))
+                                          (and (eq (cord-right c) potential)
+                                               (member (cord-left c)
+                                                       clique-vertices
+                                                       :test #'eq))))
+                          cords)
+           (when (= (length join-cords) (length clique-vertices))
+             (push potential clique-vertices)
+             (setf clique-cords (nconc clique-cords join-cords)))
+           (setf cords rest)))
+    clique-cords))
+
 (defun ultrametric-lasso2 (cords)
   (let (tree)
     (loop while (consp cords)
