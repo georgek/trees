@@ -193,7 +193,7 @@
   (sort list #'> :key (lambda (x) (random 1.0))))
 
 (defun maxi-clique (cords)
-  "Returns the maximal clique containing the start vertex."
+  "Trys to find a large clique in terms of overall number of cords."
   (let* ((vertices (sort (shuffle (cords-vertices cords))
                          #'> :key (lambda (c) (length (leafset c)))))
          (cords (copy-list cords))
