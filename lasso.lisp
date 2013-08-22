@@ -7,6 +7,9 @@
 (defmacro ucord (a b)
   `(cord ',a ',b 1))
 
+(defmacro cords (&rest cords)
+  `',(mapcar (lambda (c) (cord (car c) (cadr c) (caddr c))) cords))
+
 (defun cord-left (cord)
   (caar cord))
 
