@@ -249,3 +249,22 @@ start or 1 = end."
                 (error "Path is an invalid lasso (equal sequential weights).")))
          (setf last leaf))
     tree))
+
+(defun min-span-tree (cords)
+  (let* ((cords (sort cords #'< :key #'cord-length))
+         (trees (mapcar #'list (cords-vertices cords)))
+         (span (list)))
+    (dbg :minspan "trees: ~A~%" trees)
+    (loop while (cdr trees)
+       for cord = (pop cords)
+       for ltree = (find (cord-left cord) trees :test #'member)
+       for rtree = (find (cord-right cord) trees :test #'member)
+       do
+         (dbg :minspan "cord: ~A, ltree: ~A, rtree ~A~%" cord ltree rtree)
+         (unless (eq ltree rtree)
+           (push cord span)
+           (setf trees (remove ltree trees))
+           (setf trees (remove rtree trees))
+           (push (append ltree rtree) trees)))
+    span))
+
