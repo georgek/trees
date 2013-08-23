@@ -191,35 +191,6 @@
     (cons vertices
           (mapcar (lambda (v) (- (/ height 2) (tree-height v))) vertices))))
 
-(defun shuffle (list)
-  "Incorrect shuffle, but good enough."
-  (sort list #'> :key (lambda (x) (random 1.0))))
-
-(defun maxi-clique (cords)
-  "Trys to find a large clique in terms of overall number of cords."
-  (let* ((vertices (sort (shuffle (cords-vertices cords))
-                         #'> :key (lambda (c) (length (leafset c)))))
-         (cords (copy-list cords))
-         (clique-vertices (list (pop vertices)))
-         (clique-cords (list)))
-    (loop while (consp vertices)
-       for potential = (pop vertices) do
-         (multiple-value-bind (rest join-cords)
-             (b-remove-if (lambda (c) (or (and (eq (cord-left c) potential)
-                                               (member (cord-right c)
-                                                       clique-vertices
-                                                       :test #'eq))
-                                          (and (eq (cord-right c) potential)
-                                               (member (cord-left c)
-                                                       clique-vertices
-                                                       :test #'eq))))
-                          cords)
-           (when (= (length join-cords) (length clique-vertices))
-             (push potential clique-vertices)
-             (setf clique-cords (nconc clique-cords join-cords)))
-           (setf cords rest)))
-    clique-cords))
-
 (defun ultrametric-lasso2 (cords)
   (let (tree)
     (loop while (consp cords)
@@ -255,6 +226,82 @@
                                         (cord-length cord))
                                (dbg :lasso2 "Not ultrametric.~%")
                                (return-from ultrametric-lasso2 nil))
+                             (setf (gethash (funcall other-leaf cord)
+                                            other-leaves)
+                                   (cord-length cord)))))
+                  (setf cords (remove-duplicates cords :test #'cords-equal))))))
+    tree))
+
+(defun vertex-score (vertex)
+  (if (consp vertex)
+      (length (cdr vertex))
+      1))
+
+(defun cord-score (cord)
+  
+  )
+
+(defun shuffle (list)
+  "Incorrect shuffle, but good enough."
+  (sort list #'> :key (lambda (x) (random 1.0))))
+
+(defun maxi-clique (cords)
+  "Trys to find a large clique in terms of overall number of cords."
+  (let* ((vertices (sort (shuffle (cords-vertices cords))
+                         #'> :key #'vertex-score))
+         (cords (copy-list cords))
+         (clique-vertices (list (pop vertices)))
+         (clique-cords (list)))
+    (loop while (consp vertices)
+       for potential = (pop vertices) do
+         (multiple-value-bind (rest join-cords)
+             (b-remove-if (lambda (c) (or (and (eq (cord-left c) potential)
+                                               (member (cord-right c)
+                                                       clique-vertices
+                                                       :test #'eq))
+                                          (and (eq (cord-right c) potential)
+                                               (member (cord-left c)
+                                                       clique-vertices
+                                                       :test #'eq))))
+                          cords)
+           (when (= (length join-cords) (length clique-vertices))
+             (push potential clique-vertices)
+             (setf clique-cords (nconc clique-cords join-cords)))
+           (setf cords rest)))
+    clique-cords))
+
+(defun ultrametric-lasso3 (cords)
+  (let (tree)
+    (loop while (consp cords)
+       for min = (reduce #'min cords :key #'cord-length)
+       do
+         (multiple-value-bind (mins rest)
+             (b-remove-if (lambda (c) (/= (cord-length c) min)) cords)
+           (setf cords rest)
+           (loop for component in (components mins) do
+                (setf tree (collapse (maxi-clique component)))
+                (when (dbg-on-p :lasso3)
+                  (pretty-print-tree t tree))
+                (let ((other-leaves (make-hash-table :test #'eq))
+                      other-leaf)
+                  (loop for cord in cords do
+                       (cond ((consp (intersection (leafset (cord-left cord))
+                                                   (leafset tree)))
+                              (setf other-leaf #'cord-right)
+                              (setf (cord-left cord) tree))
+                             ((consp (intersection (leafset (cord-right cord))
+                                                   (leafset tree)))
+                              (setf other-leaf #'cord-left)
+                              (setf (cord-right cord) tree))
+                             (t
+                              (setf other-leaf nil)))
+                       (when (functionp other-leaf)
+                         (if (gethash (funcall other-leaf cord) other-leaves)
+                             (unless (= (gethash (funcall other-leaf cord)
+                                                 other-leaves)
+                                        (cord-length cord))
+                               (dbg :lasso3 "Not ultrametric.~%")
+                               (return-from ultrametric-lasso3 nil))
                              (setf (gethash (funcall other-leaf cord)
                                             other-leaves)
                                    (cord-length cord)))))
