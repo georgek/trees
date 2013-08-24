@@ -245,30 +245,43 @@
   "Incorrect shuffle, but good enough."
   (sort list #'> :key (lambda (x) (random 1.0))))
 
+(defparameter maxi-clique-iterations 10
+  "Number of times to find a random maximal clique.")
+
+(defun clique-leaves (cords)
+  "Number of leaves that will be obtained from using this clique."
+  (reduce #'+ (mapcar #'leafset (cords-vertices cords)) :key #'length))
+
 (defun maxi-clique (cords)
-  "Trys to find a large clique in terms of overall number of cords."
-  (let* ((vertices (sort (shuffle (cords-vertices cords))
-                         #'> :key #'vertex-score))
-         (cords (copy-list cords))
-         (clique-vertices (list (pop vertices)))
-         (clique-cords (list)))
-    (loop while (consp vertices)
-       for potential = (pop vertices) do
-         (multiple-value-bind (rest join-cords)
-             (b-remove-if (lambda (c) (or (and (eq (cord-left c) potential)
-                                               (member (cord-right c)
-                                                       clique-vertices
-                                                       :test #'eq))
-                                          (and (eq (cord-right c) potential)
-                                               (member (cord-left c)
-                                                       clique-vertices
-                                                       :test #'eq))))
-                          cords)
-           (when (= (length join-cords) (length clique-vertices))
-             (push potential clique-vertices)
-             (setf clique-cords (nconc clique-cords join-cords)))
-           (setf cords rest)))
-    clique-cords))
+  "Trys to find a large clique in terms of overall number of cords."  
+  (loop with max-leaves = 0 with max-clique
+     repeat maxi-clique-iterations do
+       (let* ((vertices (sort (shuffle (cords-vertices cords))
+                              #'> :key #'vertex-score))
+              (cords (copy-list cords))
+              (clique-vertices (list (pop vertices)))
+              (clique-cords (list)))
+         (loop while (consp vertices)
+            for potential = (pop vertices) do
+              (multiple-value-bind (rest join-cords)
+                  (b-remove-if (lambda (c) (or (and (eq (cord-left c) potential)
+                                                    (member (cord-right c)
+                                                            clique-vertices
+                                                            :test #'eq))
+                                               (and (eq (cord-right c) potential)
+                                                    (member (cord-left c)
+                                                            clique-vertices
+                                                            :test #'eq))))
+                               cords)
+                (when (= (length join-cords) (length clique-vertices))
+                  (push potential clique-vertices)
+                  (setf clique-cords (nconc clique-cords join-cords)))
+                (setf cords rest)))
+         (dbg :maxi-clique "Clique: ~A~%" (clique-leaves clique-cords))
+         (when (> (clique-leaves clique-cords) max-leaves)
+           (setf max-clique clique-cords
+                 max-leaves (clique-leaves max-clique))))
+       finally (return max-clique)))
 
 (defun ultrametric-lasso3 (cords)
   (let (tree)
