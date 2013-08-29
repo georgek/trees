@@ -1,6 +1,6 @@
 (in-package :gk-trees)
 
-(defparameter pretty-tree-horiz-space 1) ; this should be at least 0
+(defparameter pretty-tree-horiz-space 2) ; this should be at least 0
 (defparameter pretty-tree-height-mult 2) ; this should be at least 1
 
 ;;; unicode set
@@ -91,7 +91,9 @@
          (children-printers (mapcar #'pp-tree-printer (children tree)))
          (children-next-line (mapcar (lambda (p) (funcall p nil))
                                      children-printers))
-         (children-height-left (copy-list (edge-weights tree)))
+         (children-height-left (mapcar (lambda (w)
+                                         (1- (* w pretty-tree-height-mult)))
+                                       (edge-weights tree)))
          (children-width (mapcar #'pp-tree-width (children tree)))
          (children-total-width (+ (reduce #'+ children-width)
                                   (* (1- (length children-width))
@@ -114,13 +116,19 @@
                                                              2))
                                                  :initial-element b)
                                                 (string d)))
-                      (when a
-                        (setf output (concatenate 'string output
-                                                  (make-string
-                                                   (+ (floor (/ (1- (car cwidth))
-                                                                2))
-                                                      pretty-tree-horiz-space)
-                                                   :initial-element a))))
+                      (if a
+                          (setf output (concatenate 'string output
+                                                    (make-string
+                                                     (+ (floor
+                                                         (/ (1- (car cwidth))
+                                                            2))
+                                                        pretty-tree-horiz-space)
+                                                     :initial-element a)))
+                          (setf output (concatenate 'string output
+                                                    (make-string
+                                                     (floor (/ (1- (car cwidth))
+                                                               2))
+                                                     :initial-element #\Space))))
                       (if (and (cdr cwidth)
                                (cddr cwidth))
                           (setf b pretty-tree-horiz-char
