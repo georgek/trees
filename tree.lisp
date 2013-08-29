@@ -9,6 +9,7 @@
 (defparameter pretty-tree-vert-end-char #\│)
 (defparameter pretty-tree-left-corner-char #\╭)
 (defparameter pretty-tree-right-corner-char #\╮)
+(defparameter pretty-tree-down-char #\┬)
 (defparameter pretty-tree-node-char #\●)
 
 ;;; ascii set
@@ -20,6 +21,173 @@
 ;; (defparameter pretty-tree-node-char #\^)
 
 (defparameter tree-default-weight 1)
+
+(defclass tree ()
+  ((label
+    :initarg :label
+    :initform nil
+    :accessor label
+    :documentation "The label of this vertex.")
+   (children
+    :initarg :children
+    :initform (list)
+    :accessor children
+    :documentation "The children of this vertex.")
+   (edge-weights
+    :initarg :edge-weights
+    :initform (list)
+    :accessor edge-weights
+    :documentation "The edge-weights of the outgoing edges.")))
+
+(defmethod initialize-instance :after ((tree tree) &key)
+  ;; ensure that there are enough edge weights
+  (when (and (consp (children tree))
+             (< (length (edge-weights tree)) (length (children tree))))
+    (setf (edge-weights tree) (nconc (edge-weights tree)
+                                     (make-list (- (length (children tree))
+                                                   (length (edge-weights tree)))
+                                                :initial-element
+                                                tree-default-weight)))))
+
+(defun pp-tree-print (tree &optional (stream t))
+  (let* ((printer (pp-tree-printer tree))
+         (next-line (funcall printer nil)))
+    (loop while (string/= next-line "") do
+         (format stream "~A~%" next-line)
+         (setf next-line (funcall printer nil)))))
+
+(defgeneric pp-tree-width (tree))
+
+(defmethod pp-tree-width ((tree tree))
+  (max 1
+       (length (format nil "~A" (label tree)))
+       (+ (reduce #'+ (mapcar #'pp-tree-width
+                              (children tree)))
+          (* pretty-tree-horiz-space
+             (1- (length (children tree)))))))
+
+(defmethod pp-tree-width (tree)
+  (length (format nil "~a" tree)))
+
+(defgeneric pp-tree-height (tree))
+
+(defmethod pp-tree-height ((tree tree))
+  (1+ (reduce #'max (mapcar #'+ (mapcar #'pp-tree-height (children tree))
+                            (edge-weights tree))
+              :initial-value 0)))
+
+(defmethod pp-tree-height (tree) 1)
+
+(defgeneric pp-tree-printer (tree)
+  (:documentation "Returns a closure which prints each successive line of
+  output for the tree to the given output, or returns it as a string if the
+  output is nil.  Prints empty strings when the output is complete."))
+
+(defmethod pp-tree-printer ((tree tree))
+  (assert (>= (length (edge-weights tree)) (length (children tree))))
+  (let* ((tree-label (if (label tree) (format nil "~A" (label tree))
+                         (string pretty-tree-node-char)))
+         (tree-width (pp-tree-width tree))
+         (children-printers (mapcar #'pp-tree-printer (children tree)))
+         (children-next-line (mapcar (lambda (p) (funcall p nil))
+                                     children-printers))
+         (children-height-left (copy-list (edge-weights tree)))
+         (children-width (mapcar #'pp-tree-width (children tree)))
+         (children-total-width (+ (reduce #'+ children-width)
+                                  (* (1- (length children-width))
+                                     pretty-tree-horiz-space))))
+    (lambda (stream)
+      (let (output)
+        (cond
+          (tree-label                   ; print label line
+           (if (>= (length tree-label) tree-width)
+               (setf output tree-label)
+               (let ((b #\Space)
+                     (d pretty-tree-left-corner-char)
+                     (a pretty-tree-horiz-char))
+                 (loop
+                    for cwidth on children-width
+                    do
+                      (setf output (concatenate 'string output
+                                                (make-string
+                                                 (ceiling (/ (1- (car cwidth))
+                                                             2))
+                                                 :initial-element b)
+                                                (string d)))
+                      (when a
+                        (setf output (concatenate 'string output
+                                                  (make-string
+                                                   (+ (floor (/ (1- (car cwidth))
+                                                                2))
+                                                      pretty-tree-horiz-space)
+                                                   :initial-element a))))
+                      (if (and (cdr cwidth)
+                               (cddr cwidth))
+                          (setf b pretty-tree-horiz-char
+                                d pretty-tree-down-char)
+                          (setf b pretty-tree-horiz-char
+                                d pretty-tree-right-corner-char
+                                a nil)))
+                 ;; now put the label in
+                 (setf (subseq output
+                               (ceiling (/ (- tree-width
+                                              (length tree-label))
+                                           2))
+                               (+ (ceiling (/ (- tree-width
+                                                 (length tree-label))
+                                              2))
+                                  (length tree-label)))
+                       tree-label)))
+           (setf tree-label nil)
+           (format stream output))
+          ((some (lambda (s) (string/= s "")) children-next-line)
+           ;; initial padding for long label
+           (setf output (make-string
+                         (ceiling (/ (- tree-width children-total-width) 2))
+                         :initial-element #\Space))
+           (loop                        ; print children
+              for cprinter on children-printers
+              for cnext-line on children-next-line
+              for cheight-left on children-height-left
+              for cwidth on children-width
+              do
+                (cond
+                  ((> (car cheight-left) 0) ; vertical
+                   (setf output (concatenate 'string output
+                                             (make-string
+                                              (ceiling (/ (1- (car cwidth)) 2))
+                                              :initial-element #\Space)
+                                             (string pretty-tree-vert-char)
+                                             (make-string
+                                              (floor (/ (1- (car cwidth)) 2))
+                                              :initial-element #\Space)))
+                   (decf (car cheight-left)))
+                  ((string/= (car cnext-line) "") ; subtree
+                   (setf output (concatenate 'string output
+                                             (car cnext-line)))
+                   (setf (car cnext-line) (funcall (car cprinter) nil)))
+                  (t                    ; nothing
+                   (setf output (concatenate 'string output
+                                             (make-string
+                                              (car cwidth)
+                                              :initial-element #\Space)))))
+              ;; spacing
+                (when (cdr cprinter)
+                  (setf output (concatenate 'string output
+                                            (make-string
+                                             pretty-tree-horiz-space
+                                             :initial-element #\Space)))))
+           (format stream output))
+          (t                            ; print nothing
+           (format stream "")))))))
+
+(defmethod pp-tree-printer (tree)
+  (let ((line (format nil "~A" tree)))
+    (lambda (stream)
+      (let ((output line))
+        (when line
+          (setf line ""))
+        (format stream output)))))
 
 (defun make-proper-cherry (a ra b rb)
   "Makes a proper cherry with values a,b edge weights ra, rb."
