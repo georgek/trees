@@ -379,8 +379,16 @@
         (t
          0)))
 
-(defun tree-height (tree)
-  (tree-total-edge-height tree))
+(defgeneric tree-height (tree))
+
+(defmethod tree-height ((tree tree))
+  (loop
+     for child in (children tree)
+     for edge-weight in (edge-weights tree)
+     maximizing (+ (tree-height child) edge-weight)))
+
+(defmethod tree-height (tree)
+  0)
 
 ;;; total height of pretty printed tree
 (defun tree-total-height (tree)
@@ -547,10 +555,11 @@
          (setf x (remove b x :test #'equal))
          (setf n (length x))
          (setf h (1+ (max (tree-height a) (tree-height b))))
-         (setf x (append x (list (make-proper-cherry a
-                                                     (- h (tree-height a))
-                                                     b
-                                                     (- h (tree-height b))))))
+         (setf x (append x (list (make-instance 'tree :children (list a b)
+                                                :edge-weights
+                                                (list
+                                                 (- h (tree-height a))
+                                                 (- h (tree-height b)))))))
          (incf n))
     (car x)))
 
