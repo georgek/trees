@@ -187,6 +187,16 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
           (setf line ""))
         (format stream output)))))
 
+(defgeneric leafset (tree))
+
+(defmethod leafset ((tree tree))
+  (if (consp (children tree))
+      (reduce #'nconc (mapcar #'leafset (children tree)))
+      (label tree)))
+
+(defmethod leafset (tree)
+  (list tree))
+
 (defun make-proper-cherry (a ra b rb)
   "Makes a proper cherry with values a,b edge weights ra, rb."
   `((,a ,b) . (,ra ,rb)))

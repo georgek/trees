@@ -3,15 +3,6 @@
 
 (in-package :gk-trees)
 
-;;; returns list of leaf nodes
-(defun leafset (tree)
-  (cond
-    ((listp tree)
-     (loop for child in (car tree) append
-          (leafset child)))
-    (t
-     (list tree))))
-
 ;;; returns list choose 3
 (defun choose3 (list)
   (loop for one on list append
