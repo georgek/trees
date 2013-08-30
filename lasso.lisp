@@ -183,13 +183,14 @@
 
 (defun collapse (cords)
   (let ((height (cord-length (first cords)))
-        (vertices (list)))
+        (children (cords-vertices cords)))
     (assert (every (lambda (c) (= height (cord-length c))) cords))
-    (loop for cord in cords do
-         (setf vertices (union vertices (list (cord-left cord)
-                                              (cord-right cord)))))
-    (cons vertices
-          (mapcar (lambda (v) (- (/ height 2) (tree-height v))) vertices))))
+    (make-instance 'tree
+                   :children children
+                   :edge-weights (mapcar
+                                  (lambda (c) (- (/ height 2)
+                                                 (tree-height c)))
+                                  children))))
 
 (defun ultrametric-lasso2 (cords)
   (let (tree)
@@ -205,7 +206,7 @@
                   (return-from ultrametric-lasso2 nil))
                 (setf tree (collapse component))
                 (when (dbg-on-p :lasso2)
-                  (pretty-print-tree t tree))
+                  (pp-tree-print tree))
                 (let ((other-leaves (make-hash-table :test #'eq))
                       other-leaf)
                   (loop for cord in cords do
@@ -294,7 +295,7 @@
            (loop for component in (components mins) do
                 (setf tree (collapse (maxi-clique component)))
                 (when (dbg-on-p :lasso3)
-                  (pretty-print-tree t tree))
+                  (pp-tree-print tree))
                 (let ((other-leaves (make-hash-table :test #'eq))
                       other-leaf)
                   (loop for cord in cords do
