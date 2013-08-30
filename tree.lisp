@@ -192,7 +192,7 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
 (defmethod leafset ((tree tree))
   (if (consp (children tree))
       (reduce #'nconc (mapcar #'leafset (children tree)))
-      (label tree)))
+      (list (label tree))))
 
 (defmethod leafset (tree)
   (list tree))
