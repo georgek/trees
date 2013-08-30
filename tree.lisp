@@ -58,6 +58,10 @@
                                           :initial-element
                                           tree-default-weight)))))
 
+(defmethod print-object ((object tree) stream)
+  (print-unreadable-object (object stream :type t)
+    (format stream "with ~A leaves" (length (leafset object)))))
+
 (defun pp-tree-print (tree &optional (stream t))
   (let* ((printer (pp-tree-printer tree))
          (next-line (funcall printer nil)))
