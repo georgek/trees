@@ -4,16 +4,6 @@
 
 (defparameter stg (make-graph (a b 3) (b c 2) (c d 1) (a c 2) (b d 1)))
 
-(defun select-random (list amount)
-  "Returns AMOUNT random elements from LIST"
-  (let ((result (list))
-        (n (length list)))
-    (loop for item in list do
-         (when (< (random n) amount)    ; chance amount/n
-           (setf result (cons item result))
-           (decf amount))
-         (decf n))
-    (nreverse result)))
 
 (defun mess-up-cords (cords rem vary)
   "Messes up cords by removing the proportion REM and varying lengths by

@@ -21,3 +21,14 @@
 (defun dbg-on-p (id)
   (member id *dbg-ids*))
 
+(defun select-random (list amount)
+  "Returns AMOUNT random elements from LIST"
+  (let ((result (list))
+        (n (length list)))
+    (loop for item in list do
+         (when (< (random n) amount)    ; chance amount/n
+           (setf result (cons item result))
+           (decf amount))
+         (decf n))
+    (nreverse result)))
+
