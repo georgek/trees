@@ -563,7 +563,7 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
          (incf n))
     (car x)))
 
-(defun make-random-tree (x degree)
+(defun make-random-tree (x &optional (degree 2))
   "Makes a random tree with leafset X and degree less than or equal to
 DEGREE."
   (setf x (remove-duplicates x))
