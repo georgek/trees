@@ -583,11 +583,13 @@ DEGREE."
          (setf n (length x)))
     (car x)))
 
-(defun tree-distances (tree)
+(defgeneric tree-distances (tree))
+
+(defmethod tree-distances ((tree tree))
   "Returns list of every pairwise distance in tree"
   (let* ((cords (list))
          (h (tree-height tree))
-         (children (car tree)))
+         (children (children tree)))
     (loop for lchild on children do
          (loop for rchild on (rest lchild) do
               (setf cords
@@ -596,6 +598,9 @@ DEGREE."
                                  (loop for r in (leafset (car rchild)) collect
                                       (cord l r (* h 2))))))))
     (loop for child in children do
-         (when (consp child)
-          (setf cords (append cords (tree-distances child)))))
+         (setf cords (append cords (tree-distances child))))
     cords))
+
+(defmethod tree-distances (tree)
+  nil)
+
