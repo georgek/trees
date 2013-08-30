@@ -553,6 +553,26 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
          (incf n))
     (car x)))
 
+(defun make-random-tree (x degree)
+  "Makes a random tree with leafset X and degree less than or equal to
+DEGREE."
+  (setf x (remove-duplicates x))
+  (let ((n (length x))
+        k leaves height)
+    (loop while (> n 1) do
+         (setf k (random-between 2 (1+ (min n degree))))
+         (setf leaves (select-random x k))
+         (setf height (1+ (reduce #'max (mapcar #'tree-height leaves))))
+         (setf x (set-difference x leaves))
+         (setf x (append x (list (make-instance
+                                  'tree :children leaves
+                                  :edge-weights
+                                  (mapcar (lambda (l)
+                                            (- height (tree-height l)))
+                                          leaves)))))
+         (setf n (length x)))
+    (car x)))
+
 (defun tree-distances (tree)
   "Returns list of every pairwise distance in tree"
   (let* ((cords (list))
