@@ -78,6 +78,39 @@
 
 (defmethod pp-tree-height (tree) 1)
 
+(defun pp-tree-label-line (label width children-widths)
+  "Makes a top line string for the label line of a tree.  WIDTH is the width
+of this tree, CHILDREN-WIDTHS is a list of widths of each child."
+  (if (>= (length label) width)
+      label
+      (let ((output (make-array width :element-type 'character
+                                :fill-pointer 0 :initial-element #\Space))
+            (b #\Space)                      ; before
+            (d pretty-tree-left-corner-char) ; during
+            (a pretty-tree-horiz-char))      ; after
+        (loop
+           for cwidth on children-widths
+           for halfway = (/ (1- (car cwidth)) 2)
+           do
+             (loop repeat (ceiling halfway) do (format output "~C" b))
+             (format output "~C" d)
+             (when a
+               (loop repeat (+ (floor halfway) pretty-tree-horiz-space)
+                  do (format output "~C" a)))
+             (if (and (cdr cwidth)
+                      (cddr cwidth))
+                 (setf b pretty-tree-horiz-char
+                       d pretty-tree-down-char)
+                 (setf b pretty-tree-horiz-char
+                       d pretty-tree-right-corner-char
+                       a nil)))
+        ;; now put the label in
+        (let ((seq-start (ceiling (/ (- width (length label)) 2))))
+          (setf (subseq output seq-start (+ seq-start (length label)))
+                label))
+        (setf (fill-pointer output) width)
+        output)))
+
 (defgeneric pp-tree-printer (tree)
   (:documentation "Returns a closure which prints each successive line of
   output for the tree to the given output, or returns it as a string if the
@@ -102,89 +135,37 @@
       (let (output)
         (cond
           (tree-label                   ; print label line
-           (if (>= (length tree-label) tree-width)
-               (setf output tree-label)
-               (let ((b #\Space)
-                     (d pretty-tree-left-corner-char)
-                     (a pretty-tree-horiz-char))
-                 (loop
-                    for cwidth on children-width
-                    do
-                      (setf output (concatenate 'string output
-                                                (make-string
-                                                 (ceiling (/ (1- (car cwidth))
-                                                             2))
-                                                 :initial-element b)
-                                                (string d)))
-                      (if a
-                          (setf output (concatenate 'string output
-                                                    (make-string
-                                                     (+ (floor
-                                                         (/ (1- (car cwidth))
-                                                            2))
-                                                        pretty-tree-horiz-space)
-                                                     :initial-element a)))
-                          (setf output (concatenate 'string output
-                                                    (make-string
-                                                     (floor (/ (1- (car cwidth))
-                                                               2))
-                                                     :initial-element #\Space))))
-                      (if (and (cdr cwidth)
-                               (cddr cwidth))
-                          (setf b pretty-tree-horiz-char
-                                d pretty-tree-down-char)
-                          (setf b pretty-tree-horiz-char
-                                d pretty-tree-right-corner-char
-                                a nil)))
-                 ;; now put the label in
-                 (setf (subseq output
-                               (ceiling (/ (- tree-width
-                                              (length tree-label))
-                                           2))
-                               (+ (ceiling (/ (- tree-width
-                                                 (length tree-label))
-                                              2))
-                                  (length tree-label)))
-                       tree-label)))
+           (setf output
+                 (pp-tree-label-line tree-label tree-width children-width))
            (setf tree-label nil)
            (format stream output))
           ((some (lambda (s) (string/= s "")) children-next-line)
+           (setf output (make-array tree-width :element-type 'character
+                                    :fill-pointer 0 :initial-element #\Space))
            ;; initial padding for long label
-           (setf output (make-string
-                         (ceiling (/ (- tree-width children-total-width) 2))
-                         :initial-element #\Space))
+           (incf (fill-pointer output)
+                 (ceiling (/ (- tree-width children-total-width) 2)))
            (loop                        ; print children
               for cprinter on children-printers
               for cnext-line on children-next-line
               for cheight-left on children-height-left
               for cwidth on children-width
+              for halfway = (/ (1- (car cwidth)) 2)
               do
                 (cond
                   ((> (car cheight-left) 0) ; vertical
-                   (setf output (concatenate 'string output
-                                             (make-string
-                                              (ceiling (/ (1- (car cwidth)) 2))
-                                              :initial-element #\Space)
-                                             (string pretty-tree-vert-char)
-                                             (make-string
-                                              (floor (/ (1- (car cwidth)) 2))
-                                              :initial-element #\Space)))
+                   (incf (fill-pointer output) (ceiling halfway))
+                   (format output "~C" pretty-tree-vert-char)
+                   (incf (fill-pointer output) (floor halfway))
                    (decf (car cheight-left)))
                   ((string/= (car cnext-line) "") ; subtree
-                   (setf output (concatenate 'string output
-                                             (car cnext-line)))
+                   (format output (car cnext-line))
                    (setf (car cnext-line) (funcall (car cprinter) nil)))
                   (t                    ; nothing
-                   (setf output (concatenate 'string output
-                                             (make-string
-                                              (car cwidth)
-                                              :initial-element #\Space)))))
+                   (incf (fill-pointer output) (car cwidth))))
               ;; spacing
                 (when (cdr cprinter)
-                  (setf output (concatenate 'string output
-                                            (make-string
-                                             pretty-tree-horiz-space
-                                             :initial-element #\Space)))))
+                  (incf (fill-pointer output) pretty-tree-horiz-space)))
            (format stream output))
           (t                            ; print nothing
            (format stream "")))))))
