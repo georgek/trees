@@ -1,32 +1,33 @@
 (in-package :gk-trees)
 
+(defclass cord ()
+  ((left
+    :initarg :left
+    :initform (error "Must provide a left side.")
+    :accessor cord-left)
+   (right
+    :initarg :right
+    :initform (error "Must provide a right side.")
+    :accessor cord-right)
+   (length
+    :initarg :length
+    :initform 1
+    :accessor cord-length)))
+
+(defmethod print-object ((object cord) stream)
+  (print-unreadable-object (object stream :type t)
+    (format stream "~A : ~A = ~A" (cord-left object) (cord-right object)
+            (cord-length object))))
+
 (defun cord (a b d)
   "Makes a cord ab=d."
-  (cons (cons a b) d))
+  (make-instance 'cord :left a :right b :length d))
 
 (defmacro ucord (a b)
   `(cord ',a ',b 1))
 
 (defmacro cords (&rest cords)
   `',(mapcar (lambda (c) (cord (car c) (cadr c) (caddr c))) cords))
-
-(defun cord-left (cord)
-  (caar cord))
-
-(defun (setf cord-left) (cord-left cord)
-  (setf (caar cord) cord-left))
-
-(defun cord-right (cord)
-  (cdar cord))
-
-(defun (setf cord-right) (cord-right cord)
-  (setf (cdar cord) cord-right))
-
-(defun cord-length (cord)
-  (cdr cord))
-
-(defun (setf cord-length) (cord-length cord)
-  (setf (cdr cord) cord-length))
 
 (defun cords-equal (cord1 cord2 &optional (test #'eq))
   (or (and (funcall test (cord-left cord1) (cord-left cord2))
