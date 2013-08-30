@@ -41,13 +41,22 @@
 
 (defmethod initialize-instance :after ((tree tree) &key)
   ;; ensure that there are enough edge weights
-  (when (and (consp (children tree))
-             (< (length (edge-weights tree)) (length (children tree))))
-    (setf (edge-weights tree) (nconc (edge-weights tree)
-                                     (make-list (- (length (children tree))
-                                                   (length (edge-weights tree)))
-                                                :initial-element
-                                                tree-default-weight)))))
+  (cond
+    ((numberp (edge-weights tree))
+     (setf (edge-weights tree) (make-list (length (children tree))
+                                          :initial-element (edge-weights tree))))
+    ((consp (edge-weights tree))
+     (when (< (length (edge-weights tree)) (length (children tree)))
+       (setf (edge-weights tree)
+             (nconc (edge-weights tree)
+                    (make-list (- (length (children tree))
+                                  (length (edge-weights tree)))
+                               :initial-element
+                               tree-default-weight)))))
+    (t
+     (setf (edge-weights tree) (make-list (length (children tree))
+                                          :initial-element
+                                          tree-default-weight)))))
 
 (defun pp-tree-print (tree &optional (stream t))
   (let* ((printer (pp-tree-printer tree))
