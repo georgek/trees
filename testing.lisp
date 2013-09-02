@@ -25,3 +25,15 @@
      (setf splits (delete "" splits :test #'equal)))
    (nreverse splits)))
 
+(defun csv-to-cords (filename &key (delimiter #\,))
+  "Makes all (unique) cords from a CSV matrix file."
+  (let ((cords (list)))
+   (with-open-file (filein filename)
+     (loop for line = (read-line filein nil)
+        for i from 1
+        while line do
+          (loop for distance in (split-string line delimiter)
+             for j from 1 to (1- i) do
+               (push (cord i j distance) cords))))
+   cords))
+
