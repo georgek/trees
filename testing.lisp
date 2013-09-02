@@ -12,3 +12,16 @@
          (nrem (round (* n rem))))
     (select-random cords (- n nrem))))
 
+(defun split-string (string delimiter &key (omit-nulls t))
+  (assert (stringp string))
+  (assert (characterp delimiter))
+  (let ((splits (list)))
+   (loop for pos = (position delimiter string)
+      while pos do
+        (push (subseq string 0 pos) splits)
+        (setf string (subseq string (1+ pos)))
+      finally (push string splits))
+   (when omit-nulls
+     (setf splits (delete "" splits :test #'equal)))
+   (nreverse splits)))
+
