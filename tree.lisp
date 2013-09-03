@@ -58,6 +58,12 @@
                                           :initial-element
                                           tree-default-weight)))))
 
+(defun make-tree (tree)
+  "Makes a tree from a Lisp tree."
+  (if (consp tree)
+      (make-instance 'tree :children (mapcar #'make-tree tree))
+      (make-instance 'tree :label tree)))
+
 (defmethod print-object ((object tree) stream)
   (print-unreadable-object (object stream :type t)
     (format stream "with ~A leaves" (length (leafset object)))))
