@@ -36,6 +36,6 @@
         while line do
           (loop for distance in (split-string line delimiter)
              for j from 1 to (1- i) do
-               (push (cord i j distance) cords))))
+               (push (cord i j (read-from-string distance)) cords))))
    cords))
 
