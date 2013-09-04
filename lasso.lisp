@@ -243,15 +243,6 @@
                   (setf cords (remove-duplicates cords :test #'cords-equal))))))
     tree))
 
-(defun vertex-score (vertex)
-  (if (consp vertex)
-      (length (cdr vertex))
-      1))
-
-(defun cord-score (cord)
-  
-  )
-
 (defun shuffle (list)
   "Incorrect shuffle, but good enough."
   (sort list #'> :key (lambda (x) (random 1.0))))
