@@ -153,18 +153,27 @@
   (let ((removed (remove-if test list)))
     (values removed (set-difference list removed))))
 
+(defun cord-other-end (cord this-end)
+  (assert (cord-contains-p cord this-end))
+  (if (eq (cord-left cord) this-end)
+      (cord-right cord)
+      (cord-left cord)))
+
 (defun component (cords vertex)
-  (dbg :component "cords: ~A~%v: ~A~%" cords vertex)
-  (multiple-value-bind (rest component)
-      (b-remove-if (lambda (c) (cord-contains-p c vertex)) cords)
-    (dbg :component "comp: ~A~%rest: ~A~%" component rest)
-    (loop for cord in component do
-         (setf component (union component (component rest
-                                                     (if (eq vertex
-                                                             (cord-left cord))
-                                                         (cord-right cord)
-                                                         (cord-left cord))))))
-    (values component (set-difference cords component))))
+  (let ((vertices (list vertex))
+        (component (list))
+        (rest (list)))
+    (loop while (consp vertices)
+       for current-vertex = (pop vertices) do
+         (loop for cord in cords do
+              (if (cord-contains-p cord current-vertex)
+                  (progn
+                    (push cord component)
+                    (push (cord-other-end cord current-vertex) vertices))
+                  (push cord rest)))
+         (setf cords rest
+               rest (list)))
+    (values component cords)))
 
 (defun components (cords)
   "Returns a list of lists of cords which are connected."
