@@ -21,16 +21,29 @@
 
 (defparameter n-tests 100)
 
+(defun mean (list)
+  (/ (reduce #'+ list) (length list)))
+
 (defun random-test (degree leaves)
+  (format t "ocords: ~d, oleaves: ~d~%~%" (/ (* leaves (1- leaves)) 2) leaves)
+  (format t " mcords : nleaves :  ncords~%")
   (loop for i from 10 to 90 by 10 do
-       (let ((nleaves (list)))
+       (let (ocords
+             (nleaves (list))
+             (ncords (list)))
          (loop repeat n-tests
             for tree = (make-random-tree (range 1 leaves) degree)
             for cords = (tree-distances tree)
             for mcords = (mess-up-conn cords (/ i 100) nil)
+            for l-tree = (ultrametric-lasso3 mcords)
             do
-              (push (length (leafset (ultrametric-lasso3 mcords))) nleaves))
-         (format t "~A : ~,2f~%" i (/ (reduce #'+ nleaves) (length nleaves))))))
+              (setf ocords (length mcords))
+              (push (length (leafset l-tree)) nleaves)
+              (push (length (lassoed-tree-used-cords l-tree)) ncords))
+         (format t "~7d : ~7,2f : ~7,2f~%"
+                 ocords
+                 (mean nleaves)
+                 (mean ncords)))))
 
 (defun split-string (string delimiter &key (omit-nulls t))
   (assert (stringp string))
