@@ -191,16 +191,35 @@
         (m (length (remove-duplicates cords :test #'cords-equal))))
     (= m (/ (* n (- n 1)) 2))))
 
+(defclass lassoed-tree (tree)
+  ((used-cords
+    :initarg :used-cords
+    :initform (list)
+    :accessor used-cords
+    :documentation "The cords that were used to lasso this tree.")))
+
+(defgeneric lassoed-tree-used-cords (tree)
+  (:documentation "All cords used to lasso this tree."))
+
+(defmethod lassoed-tree-used-cords ((tree lassoed-tree))
+  (append (used-cords tree) (reduce #'append
+                                    (mapcar #'lassoed-tree-used-cords
+                                            (children tree)))))
+
+(defmethod lassoed-tree-used-cords (tree)
+  (list))
+
 (defun collapse (cords)
   (let ((height (cord-length (first cords)))
         (children (cords-vertices cords)))
     (assert (every (lambda (c) (= height (cord-length c))) cords))
-    (make-instance 'tree
+    (make-instance 'lassoed-tree
                    :children children
                    :edge-weights (mapcar
                                   (lambda (c) (- (/ height 2)
                                                  (tree-height c)))
-                                  children))))
+                                  children)
+                   :used-cords (reduce #'nconc (mapcar #'real-cords cords)))))
 
 (defun ultrametric-lasso2 (cords)
   (let (tree)
@@ -285,40 +304,81 @@
                  max-leaves (clique-leaves max-clique))))
        finally (return max-clique)))
 
+(defclass collapsed-cord (cord)
+  ((real-cords
+    :initarg :real-cords
+    :initform (list)
+    :accessor real-cords
+    :documentation "The real cords that were collapsed to this cord.")))
+
+(defmethod initialize-instance :after ((cord collapsed-cord) &key)
+  (when (null (real-cords cord))
+    (setf (real-cords cord) (list cord))))
+
+(defgeneric collapsed-cord (object))
+
+(defmethod collapsed-cord ((cord cord))
+  (make-instance 'collapsed-cord :left (cord-left cord) :right (cord-right cord)
+                 :length (cord-length cord)))
+
+(defun length-vote (lengths)
+  "Returns the most common length in list LENGTHS."
+  (let ((counts (make-hash-table)))
+    (loop for length in lengths do
+         (if (gethash length counts)
+             (incf (gethash length counts))
+             (setf (gethash length counts) 1)))
+    (loop with max-length = 0 with max
+       for length being the hash-keys in counts do
+         (when (> (gethash length counts) max-length)
+           (setf max length max-length (gethash length counts)))
+       finally (return max))))
+
+(defun collapse-cords (cords clique-vertices collapsed-tree)
+  (let ((collapsed-cords (make-hash-table :test #'eq))
+        (final-cords (list))
+        (rest (list)))
+    (loop for cord in cords do
+         (cond
+           ((find (cord-left cord) clique-vertices)
+            (push cord (gethash (cord-right cord) collapsed-cords)))
+           ((find (cord-right cord) clique-vertices)
+            (push cord (gethash (cord-left cord) collapsed-cords)))
+           (t
+            (push cord rest))))
+    (loop for other-end being the hash-keys in collapsed-cords 
+       for length = (length-vote (mapcar #'cord-length
+                                         (gethash other-end collapsed-cords)))
+       for real-cords = (remove-if-not (lambda (c) (= (cord-length c) length))
+                                       (gethash other-end collapsed-cords))
+       do
+         (push (make-instance 'collapsed-cord
+                              :left collapsed-tree :right other-end
+                              :length length
+                              :real-cords (reduce #'nconc
+                                                  (mapcar #'real-cords
+                                                          real-cords)))
+               final-cords))
+    (nconc final-cords rest)))
+
 (defun ultrametric-lasso3 (cords)
-  (let (tree)
+  (assert (= 1 (length (components cords))))
+  (let (tree
+        (cords (mapcar #'collapsed-cord cords)))
     (loop while (consp cords)
        for min = (reduce #'min cords :key #'cord-length)
        do
+         (dbg :lasso3 "Min: ~A~%" min)
+         (dbg :lasso3 "Cords: ~A~%" cords)
          (multiple-value-bind (mins rest)
              (b-remove-if (lambda (c) (/= (cord-length c) min)) cords)
            (setf cords rest)
            (loop for component in (components mins) do
                 (setf tree (collapse (maxi-clique component)))
-                (when (dbg-on-p :lasso3)
-                  (pp-tree-print tree))
-                (let ((other-leaves (make-hash-table :test #'eq))
-                      other-leaf)
-                  (loop for cord in cords do
-                       (cond ((consp (intersection (leafset (cord-left cord))
-                                                   (leafset tree)))
-                              (setf other-leaf #'cord-right)
-                              (setf (cord-left cord) tree))
-                             ((consp (intersection (leafset (cord-right cord))
-                                                   (leafset tree)))
-                              (setf other-leaf #'cord-left)
-                              (setf (cord-right cord) tree))
-                             (t
-                              (setf other-leaf nil)))
-                       (when (functionp other-leaf)
-                         (if (gethash (funcall other-leaf cord) other-leaves)
-                             (unless (= (gethash (funcall other-leaf cord)
-                                                 other-leaves)
-                                        (cord-length cord))
-                               (dbg :lasso3 "Not ultrametric.~%")
-                               (return-from ultrametric-lasso3 nil))
-                             (setf (gethash (funcall other-leaf cord)
-                                            other-leaves)
-                                   (cord-length cord)))))
-                  (setf cords (remove-duplicates cords :test #'cords-equal))))))
+                (dbg :lasso3 "Tree used cords: ~A~%" (used-cords tree))
+              ;; (when (dbg-on-p :lasso3)
+              ;;   (pp-tree-print tree))
+                (setf cords (collapse-cords cords (cords-vertices component)
+                                            tree)))))
     tree))
+
