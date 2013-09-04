@@ -14,6 +14,24 @@
          (nrem (round (* n rem))))
     (select-random cords (- n nrem))))
 
+(defun mess-up-conn (cords rem vary)
+  (loop for mcords = (mess-up-cords cords rem vary) do
+       (when (= (length (components mcords)) 1)
+         (return mcords))))
+
+(defparameter n-tests 100)
+
+(defun random-test (degree leaves)
+  (loop for i from 10 to 90 by 10 do
+       (let ((nleaves (list)))
+         (loop repeat n-tests
+            for tree = (make-random-tree (range 1 leaves) degree)
+            for cords = (tree-distances tree)
+            for mcords = (mess-up-conn cords (/ i 100) nil)
+            do
+              (push (length (leafset (ultrametric-lasso3 mcords))) nleaves))
+         (format t "~A : ~,2f~%" i (/ (reduce #'+ nleaves) (length nleaves))))))
+
 (defun split-string (string delimiter &key (omit-nulls t))
   (assert (stringp string))
   (assert (characterp delimiter))
