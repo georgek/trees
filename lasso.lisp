@@ -340,8 +340,9 @@
            (setf max length max-length (gethash length counts)))
        finally (return max))))
 
-(defun collapse-cords (cords clique-vertices collapsed-tree)
-  (let ((collapsed-cords (make-hash-table :test #'eq))
+(defun collapse-cords (cords component-vertices collapsed-tree)
+  (let ((clique-vertices (children collapsed-tree))
+        (collapsed-cords (make-hash-table :test #'eq))
         (final-cords (list))
         (rest (list)))
     (loop for cord in cords do
@@ -350,7 +351,9 @@
             (push cord (gethash (cord-right cord) collapsed-cords)))
            ((find (cord-right cord) clique-vertices)
             (push cord (gethash (cord-left cord) collapsed-cords)))
-           (t
+           ((null (intersection (cords-vertices (list cord))
+                                component-vertices))
+            ;; cord is not incident with unused vertices in component
             (push cord rest))))
     (loop for other-end being the hash-keys in collapsed-cords 
        for length = (length-vote (mapcar #'cord-length
