@@ -341,10 +341,14 @@
        finally (return max))))
 
 (defun collapse-cords (cords component-vertices collapsed-tree)
-  (let ((clique-vertices (children collapsed-tree))
+  (let ((clique-vertices (if (consp (label collapsed-tree))
+                             (label collapsed-tree)
+                             (children collapsed-tree)))
         (collapsed-cords (make-hash-table :test #'eq))
         (final-cords (list))
         (rest (list)))
+    (dbg :coll-cords "Component: ~A~%Clique: ~A~%" component-vertices
+         clique-vertices)
     (loop for cord in cords do
          (cond
            ((find (cord-left cord) clique-vertices)
@@ -385,8 +389,8 @@
            (loop for component in (components mins) do
                 (setf tree (collapse (maxi-clique component)))
                 (dbg :lasso3 "Tree used cords: ~A~%" (used-cords tree))
-              ;; (when (dbg-on-p :lasso3)
-              ;;   (pp-tree-print tree))
+              (when (dbg-on-p :lasso3)
+                (pp-tree-print tree))
                 (setf cords (collapse-cords cords (cords-vertices component)
                                             tree)))))
     tree))
