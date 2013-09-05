@@ -213,13 +213,19 @@
   (let ((height (cord-length (first cords)))
         (children (cords-vertices cords)))
     (assert (every (lambda (c) (= height (cord-length c))) cords))
-    (make-instance 'lassoed-tree
-                   :children children
-                   :edge-weights (mapcar
-                                  (lambda (c) (- (/ height 2)
-                                                 (tree-height c)))
-                                  children)
-                   :used-cords (reduce #'nconc (mapcar #'real-cords cords)))))
+    (if (= height 0)
+        (make-instance
+         'lassoed-tree
+         :label children
+         :used-cords (reduce #'nconc (mapcar #'real-cords cords)))
+        (make-instance
+         'lassoed-tree
+         :children children
+         :edge-weights (mapcar
+                        (lambda (c) (- (/ height 2)
+                                       (tree-height c)))
+                        children)
+         :used-cords (reduce #'nconc (mapcar #'real-cords cords))))))
 
 (defun ultrametric-lasso2 (cords)
   (let (tree)
