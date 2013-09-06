@@ -329,6 +329,7 @@
 (defun length-vote (lengths)
   "Returns the most common length in list LENGTHS."
   (let ((counts (make-hash-table)))
+    (dbg :vote "~{~A~%~}~%" lengths)
     (loop for length in lengths do
          (if (gethash length counts)
              (incf (gethash length counts))
