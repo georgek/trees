@@ -6,6 +6,10 @@
 
 (defparameter stg (make-graph (a b 3) (b c 2) (c d 1) (a c 2) (b d 1)))
 
+(defun print-tree-and-cords (tree &optional (stream t))
+  (let ((used-cords (lassoed-tree-used-cords tree)))
+    (pp-tree-print tree stream)
+    (format stream "Cords (~A): ~A~%" (length used-cords) used-cords)))
 
 (defun mess-up-cords (cords rem vary)
   "Messes up cords by removing the proportion REM and varying lengths by
