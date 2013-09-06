@@ -283,8 +283,7 @@
   "Trys to find a large clique in terms of overall number of cords."  
   (loop with max-leaves = 0 with max-clique
      repeat maxi-clique-iterations do
-       (let* ((vertices (sort (shuffle (cords-vertices cords))
-                              #'> :key #'vertex-score))
+       (let* ((vertices (shuffle (cords-vertices cords)))
               (cords (copy-list cords))
               (clique-vertices (list (pop vertices)))
               (clique-cords (list)))
