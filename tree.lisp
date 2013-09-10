@@ -548,10 +548,10 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
         (t
          form)))
 
-(defun range (beg end)
+(defun range (beg end &optional (step 1))
   "Returns range of numbers between beg and end."
-  (assert (<= beg end))
-  (loop for i from beg to end collecting i))
+  (assert (and (<= beg end) (> step 0)))
+  (loop for i from beg to end by step collecting i))
 
 (defun make-random-binary (x)
   "Makes a random binary tree with leafset X"
