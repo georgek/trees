@@ -23,25 +23,33 @@
   (/ (reduce #'+ list) (length list)))
 
 (defun random-test (degree leaves)
-  (format t "ocords: ~d, oleaves: ~d~%~%" (/ (* leaves (1- leaves)) 2) leaves)
-  (format t " mcords : nleaves :  ncords~%")
-  (loop for i from 10 to 90 by 10 do
-       (let (ocords
-             (nleaves (list))
-             (ncords (list)))
-         (loop repeat n-tests
-            for tree = (make-random-tree (range 1 leaves) degree)
-            for cords = (tree-distances tree)
-            for mcords = (mess-up-conn cords (/ i 100) nil)
-            for l-tree = (ultrametric-lasso3 mcords)
-            do
-              (setf ocords (length mcords))
-              (push (length (leafset l-tree)) nleaves)
-              (push (length (lassoed-tree-used-cords l-tree)) ncords))
-         (format t "~7d : ~7,2f : ~7,2f~%"
-                 ocords
-                 (mean nleaves)
-                 (mean ncords)))))
+  (let ((ncords (/ (* leaves (1- leaves)) 2)))
+    ;; (format t "ncords: ~d, nleaves: ~d~%~%" ncords leaves)
+    (format t " mcords  nleaves   ncords~%")
+    (loop for i from 10 to 90 by 10 do
+         (let (nmcords
+               (nleaves (list))
+               (recovered-cords (list)))
+           (loop repeat n-tests
+              for tree = (make-random-tree (range 1 leaves) degree)
+              for cords = (tree-distances tree)
+              for mcords = (mess-up-conn cords (/ i 100) nil)
+              for l-tree = (ultrametric-lasso3 mcords)
+              do
+                (setf nmcords (length mcords))
+                (push (length (leafset l-tree)) nleaves)
+                (push (length (lassoed-tree-used-cords l-tree)) recovered-cords))
+           (format t "~7,2f  ~7,2f  ~7,2f~%"
+                   (/ nmcords ncords)
+                   (/ (mean nleaves) leaves)
+                   (/ (mean recovered-cords) nmcords))))))
+
+(defun random-tests-pgfplots (nleaves degrees)
+  "DEGREES is a list of degrees to run the experiment on."
+  (loop for degree in degrees do
+       (format t "      \\addplot table[x=mcords,y=ncords] {~%")
+       (random-test degree nleaves)
+       (format t "   };~%   \\addlegendentry{~d}~%" degree)))
 
 (defun split-string (string delimiter &key (omit-nulls t))
   (assert (stringp string))
