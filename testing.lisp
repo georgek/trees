@@ -77,3 +77,26 @@
                (push (cord i j (read-from-string distance)) cords))))
    cords))
 
+(defun csv-test-pgfplots (filename)
+  (let* ((cords (csv-to-cords filename))
+         (ncords (length cords))
+         (leaves (length (cords-vertices cords))))
+    (format t "      \\addplot table[x=mcords,y=ncords] {~%")
+    (format t " mcords  nleaves   ncords~%")
+    (loop for i from 10 to 90 by 10 do
+         (let (nmcords
+               (nleaves (list))
+               (recovered-cords (list)))
+           (loop repeat n-tests
+              for mcords = (mess-up-conn cords (/ i 100) nil)
+              for l-tree = (ultrametric-lasso3 mcords)
+              do
+                (setf nmcords (length mcords))
+                (push (length (leafset l-tree)) nleaves)
+                (push (length (lassoed-tree-used-cords l-tree)) recovered-cords))
+           (format t "~7,2f  ~7,2f  ~7,2f~%"
+                   (/ nmcords ncords)
+                   (/ (mean nleaves) leaves)
+                   (/ (mean recovered-cords) nmcords))))
+    (format t "   };~%")))
+
