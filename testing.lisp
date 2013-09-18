@@ -5,12 +5,21 @@
     (pp-tree-print tree stream)
     (format stream "Cords (~A): ~A~%" (length used-cords) used-cords)))
 
+(defun add-noise-to-cords (cords amount)
+  "Adds noise to the lengths of the cords.  AMOUNT controls the amount of
+  noise.  A value of 1 means a distance can be varied by as much as the value
+  of the mean length."
+  (let ((amt (* amount (mean (mapcar #'cord-length cords)))))
+   (mapcar (lambda (c) (cord (cord-left c) (cord-right c)
+                             (+ (cord-length c) (random-between (- amt) amt))))
+           cords)))
+
 (defun mess-up-cords (cords rem vary)
   "Messes up cords by removing the proportion REM and varying lengths by
   proportion VARY"
   (let* ((n (length cords))
          (nrem (round (* n rem))))
-    (select-random cords (- n nrem))))
+    (add-noise-to-cords (select-random cords (- n nrem)) vary)))
 
 (defun mess-up-conn (cords rem vary)
   (loop for mcords = (mess-up-cords cords rem vary) do

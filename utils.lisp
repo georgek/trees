@@ -23,8 +23,13 @@
 
 (defun random-between (m n)
   "Returns a pseudo-random number between N (inclusive) and M (exclusive."
-  (assert (> n m))
-  (+ (random (- n m)) m))
+  (cond
+    ((= m n)
+     n)
+    ((< n m)
+     (+ (random (- m n)) n))
+    ((> n m)
+     (+ (random (- n m)) m))))
 
 (defun select-random (list amount)
   "Returns AMOUNT random elements from LIST"
