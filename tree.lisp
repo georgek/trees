@@ -614,3 +614,19 @@ DEGREE."
 (defmethod tree-distances (tree)
   nil)
 
+(defgeneric tree-clusters (tree)
+  (:documentation "Returns the set of all clusters displayed by this tree."))
+
+(defmethod tree-clusters ((tree tree))
+  (cons (leafset tree)
+        (reduce #'nconc (mapcar #'tree-clusters (children tree)))))
+
+(defmethod tree-clusters (tree)
+  (list (list tree)))
+
+(defun tree-distance (tree1 tree2)
+  "The distance between TREE1 and TREE2 according to the Robinson-Foulds
+metric."
+  (length (set-difference (tree-clusters tree1) (tree-clusters tree2)
+                          :test #'equal)))
+
