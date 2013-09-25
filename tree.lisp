@@ -554,24 +554,24 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
   (loop for i from beg to end by step collecting i))
 
 (defun make-random-binary (x)
-  "Makes a random binary tree with leafset X"
-  (let ((n (length x))
-        a b h)
-    (loop while (> n 1) do
-         (setf a (nth (random n) x))
-         (setf x (remove a x :test #'equal))
-         (setf n (length x))
-         (setf b (nth (random n) x))
-         (setf x (remove b x :test #'equal))
-         (setf n (length x))
-         (setf h (1+ (max (tree-height a) (tree-height b))))
-         (setf x (append x (list (make-instance 'tree :children (list a b)
-                                                :edge-weights
-                                                (list
-                                                 (- h (tree-height a))
-                                                 (- h (tree-height b)))))))
-         (incf n))
-    (car x)))
+  "Makes a random binary tree with leafset X using the Yule-Harding model"
+  (setf x (mapcar #'make-tree (remove-duplicates x)))
+  (let* ((leaves (select-random x 2))
+         (tree (make-instance 'tree :children leaves))
+         (rest (set-difference x leaves)))
+    (loop while (consp rest)
+       for new-leaf = (car (select-random rest 1))
+       for old-leaf = (car (select-random leaves 1))
+       for new-old-leaf = (make-tree (label old-leaf))
+       do
+         (setf rest (remove new-leaf rest :test #'eq))
+         (setf leaves (remove old-leaf leaves :test #'eq))
+         (push new-leaf leaves)
+         (push new-old-leaf leaves)
+         (setf (label old-leaf) nil)
+         (setf (children old-leaf) (list new-leaf new-old-leaf))
+         (setf (edge-weights old-leaf) (list 1 1)))
+    tree))
 
 (defun make-random-tree (x &optional (degree 2))
   "Makes a random tree with leafset X and degree less than or equal to
