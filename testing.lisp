@@ -42,7 +42,7 @@
            (loop repeat n-tests
               for tree = (make-random-tree (range 1 leaves) degree)
               for cords = (tree-distances tree)
-              for mcords = (mess-up-conn cords (/ i 100) nil)
+              for mcords = (mess-up-conn cords (/ i 100) 0)
               for l-tree = (ultrametric-lasso3 mcords)
               do
                 (setf nmcords (length mcords))
@@ -90,7 +90,6 @@
   (let* ((cords (csv-to-cords filename))
          (ncords (length cords))
          (leaves (length (cords-vertices cords))))
-    (format t "      \\addplot table[x=mcords,y=ncords] {~%")
     (format t " mcords  nleaves   ncords~%")
     (loop for i from 10 to 90 by 10 do
          (let (nmcords
@@ -106,6 +105,5 @@
            (format t "~7,2f  ~7,2f  ~7,2f~%"
                    (/ nmcords ncords)
                    (/ (mean nleaves) leaves)
-                   (/ (mean recovered-cords) nmcords))))
-    (format t "   };~%")))
+                   (/ (mean recovered-cords) nmcords))))))
 
