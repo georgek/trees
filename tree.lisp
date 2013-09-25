@@ -630,3 +630,11 @@ metric."
   (length (set-difference (tree-clusters tree1) (tree-clusters tree2)
                           :test #'equal)))
 
+(defun tree-make-ultrametric (tree)
+  (let ((height (tree-height tree)))
+    (make-instance 'tree
+                   :label (label tree)
+                   :children (mapcar #'tree-make-ultrametric (children tree))
+                   :edge-weights (mapcar (lambda (c) (- height (tree-height c)))
+                                         (children tree)))))
+
