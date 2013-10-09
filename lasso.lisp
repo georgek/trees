@@ -280,7 +280,7 @@
   (reduce #'+ (mapcar #'leafset (cords-vertices cords)) :key #'length))
 
 (defun maxi-clique (cords)
-  "Trys to find a large clique in terms of overall number of cords."  
+  "Trys to find a large clique in terms of overall number of leaves."
   (loop with max-leaves = 0 with max-clique
      repeat maxi-clique-iterations do
        (let* ((vertices (shuffle (cords-vertices cords)))
