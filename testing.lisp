@@ -60,6 +60,12 @@
        (random-test degree nleaves)
        (format t "   };~%   \\addlegendentry{~d}~%" degree)))
 
+(defun file-string (filename)
+  (with-open-file (filein filename)
+    (reduce (lambda (s1 s2) (concatenate 'string s1 s2))
+            (loop for line = (read-line filein nil)
+               while line collect line))))
+
 (defun split-string (string delimiter &key (omit-nulls t))
   (assert (stringp string))
   (assert (characterp delimiter))
