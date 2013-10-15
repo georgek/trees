@@ -671,3 +671,49 @@ metric."
                    :edge-weights (mapcar (lambda (c) (- height (tree-height c)))
                                          (children tree)))))
 
+(defgeneric canonical< (object1 object2))
+
+(defmethod canonical< (object1 object2)
+  t)
+
+(defmethod canonical< ((object1 number) (object2 number))
+  (< object1 object2))
+
+(defmethod canonical< ((object1 number) object2)
+  t)
+
+(defmethod canonical< (object1 (object2 number))
+  nil)
+
+(defmethod canonical< ((object1 string) (object2 string))
+  (string< object1 object2))
+
+(defmethod canonical< ((object1 string) (object2 tree))
+  t)
+
+(defmethod canonical< ((object1 tree) (object2 string))
+  nil)
+
+(defmethod canonical< ((object1 tree) (object2 tree))
+  (if (consp (children object1))
+      (if (consp (children object2))
+          (canonical< (car (children object1)) (car (children object2)))
+          nil)
+      (if (consp (children object2))
+          t
+          (canonical< (label object1) (label object2)))))
+
+(defgeneric canonicalise-tree (tree)
+  (:documentation "Sorts the leaves."))
+
+(defmethod canonicalise-tree ((tree tree))
+  (mapc #'canonicalise-tree (children tree))
+  (let ((c-ew (sort (mapcar #'cons (children tree) (edge-weights tree))
+                    #'canonical< :key #'car)))
+    (setf (children tree) (mapcar #'car c-ew))
+    (setf (edge-weights tree) (mapcar #'cdr c-ew)))
+  tree)
+
+(defmethod canonicalise-tree (tree)
+  tree)
+
