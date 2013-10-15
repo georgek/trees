@@ -80,16 +80,29 @@
    (nreverse splits)))
 
 (defun csv-to-cords (filename &key (limit most-positive-fixnum)
-                                (delimiter #\,))
+                                (delimiter #\,) (labelled nil)
+                                (truncate-labels nil))
   "Makes all (unique) cords from a CSV matrix file."
-  (let ((cords (list)))
+  (let ((cords (list))
+        (names (list))
+        (namefun #'identity))
    (with-open-file (filein filename)
+     (when labelled
+       (setf names (split-string (read-line filein nil) delimiter))
+       (setf namefun (lambda (n) (nth (1- n) names))))
+     (when truncate-labels
+       (setf names (mapcar (lambda (s)
+                             (subseq s 0 (min (length s) truncate-labels)))
+                           names)))
      (loop for line = (read-line filein nil)
         for i from 1 to limit
         while line do
           (loop for distance in (split-string line delimiter)
              for j from 1 to (1- i) do
-               (push (cord i j (read-from-string distance)) cords))))
+               (push (cord (funcall namefun i)
+                           (funcall namefun j)
+                           (read-from-string distance))
+                     cords))))
    cords))
 
 (defun csv-test-pgfplots (filename)
