@@ -64,6 +64,38 @@
       (make-instance 'tree :children (mapcar #'make-tree tree))
       (make-instance 'tree :label tree)))
 
+(defun make-tree-phylip (string &key (truncate-labels nil))
+  "Makes a tree from output from phylip."
+  (let ((current-tree (list (make-tree nil)))
+        (current-string (make-array 10 :element-type 'character
+                                    :fill-pointer 0 :adjustable t)))
+    (loop for c across string do
+         (case c
+           (#\( (push (make-tree nil) current-tree)
+                (push (car current-tree) (children (cadr current-tree))))
+           (#\) (push (read-from-string current-string)
+                      (edge-weights (car current-tree)))
+                (when (> (fill-pointer current-string) 0)
+                  (setf (fill-pointer current-string) 0)
+                  (pop current-tree)))
+           (#\, (when (> (fill-pointer current-string) 0)
+                  (push (read-from-string current-string)
+                        (edge-weights (car current-tree)))
+                  (setf (fill-pointer current-string) 0)))
+           (#\: (when (> (fill-pointer current-string) 0)
+                  (when truncate-labels
+                   (setf (fill-pointer current-string)
+                         (min (fill-pointer current-string) truncate-labels)))
+                  (push (reduce (lambda (s1 s2) (concatenate 'string s1 "_" s2))
+                                (split-string (copy-seq current-string) #\_))
+                        (children (car current-tree)))
+                  (setf (fill-pointer current-string) 0)))
+           (#\Tab nil)
+           (#\Newline nil)
+           (#\; nil)
+           (t   (vector-push-extend c current-string))))
+    (car (children (car current-tree)))))
+
 (defmethod print-object ((object tree) stream)
   (print-unreadable-object (object stream :type t)
     (format stream "with ~A leaves" (length (leafset object)))))
