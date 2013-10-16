@@ -96,6 +96,30 @@
            (t   (vector-push-extend c current-string))))
     (car (children (car current-tree)))))
 
+(defun tree-print (tree &optional (stream t))
+  (print-tree-phylip tree stream)
+  (format stream ";"))
+
+(defgeneric print-tree-phylip (tree stream)
+  (:documentation "Prints tree in Newick format."))
+
+(defmethod print-tree-phylip ((tree tree) stream)
+  (when (consp (children tree))
+    (format stream "(")
+    (loop for cc on (children tree)
+       for ec on (edge-weights tree)
+       do
+         (print-tree-phylip (car cc) stream)
+         (format stream ":~f" (car ec))
+         (unless (endp (cdr cc))
+           (format stream ",")))
+    (format stream ")"))
+  (when (label tree)
+    (format stream "~a" (label tree))))
+
+(defmethod print-tree-phylip (tree stream)
+  (format stream "~A" tree))
+
 (defmethod print-object ((object tree) stream)
   (print-unreadable-object (object stream :type t)
     (format stream "with ~A leaves" (length (leafset object)))))
