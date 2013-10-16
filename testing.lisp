@@ -9,9 +9,11 @@
   "Adds noise to the lengths of the cords.  AMOUNT controls the amount of
   noise.  A value of 1 means a distance can be varied by as much as the value
   of the mean length."
-  (let ((amt (* amount (mean (mapcar #'cord-length cords)))))
+  (let ((amt (* amount (floor (mean (mapcar #'cord-length cords))))))
    (mapcar (lambda (c) (cord (cord-left c) (cord-right c)
-                             (+ (cord-length c) (random-between (- amt) amt))))
+                             (max
+                              (+ (cord-length c) (random-between (- amt) amt))
+                              0)))
            cords)))
 
 (defun mess-up-cords (cords rem vary)
@@ -126,4 +128,15 @@
                    (/ nmcords ncords)
                    (/ (mean nleaves) leaves)
                    (/ (mean recovered-cords) nmcords))))))
+
+(defun noise-test (degree leaves)
+  (loop for i from 0 to 3 by 0.1
+     for distances = (list)
+     do
+       (loop repeat n-tests
+          for otree = (make-random-tree (range 1 leaves) degree)
+          for ctree = (ultrametric-lasso3 (mess-up-conn (tree-distances otree)
+                                                        0 i))
+          do (push (tree-distance otree ctree) distances))
+       (format t "~7,2f ~7,2f~%" i (mean distances))))
 
