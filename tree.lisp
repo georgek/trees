@@ -691,12 +691,18 @@ metric."
 (defmethod canonical< ((object1 string) (object2 tree))
   (if (consp (children object2))
       t
-      (string< object1 (label object2))))
+      (canonical< object1 (label object2))))
 
 (defmethod canonical< ((object1 tree) (object2 string))
   (if (consp (children object1))
       nil
-      (string< (label object1) object2)))
+      (canonical< (label object1) object2)))
+
+(defmethod canonical< ((object1 list) object2)
+  nil)
+
+(defmethod canonical< (object1 (object2 list))
+  t)
 
 (defmethod canonical< ((object1 tree) (object2 tree))
   (if (consp (children object1))
