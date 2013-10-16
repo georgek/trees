@@ -99,10 +99,11 @@
         while line do
           (loop for distance in (split-string line delimiter)
              for j from 1 to (1- i) do
-               (push (cord (funcall namefun i)
-                           (funcall namefun j)
-                           (read-from-string distance))
-                     cords))))
+               (unless (string= distance "?")
+                (push (cord (funcall namefun i)
+                            (funcall namefun j)
+                            (read-from-string distance))
+                      cords)))))
    cords))
 
 (defun csv-test-pgfplots (filename)
