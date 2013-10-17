@@ -6,24 +6,24 @@
 (defparameter pretty-tree-width-mult 2) ; this should be at least 1
 
 ;;; unicode set
-(defparameter pretty-tree-horiz-char #\─)
-(defparameter pretty-tree-vert-char #\│)
-(defparameter pretty-tree-vert-end-char #\│)
-(defparameter pretty-tree-left-corner-char #\╭)
-(defparameter pretty-tree-right-corner-char #\╮)
-(defparameter pretty-tree-top-corner-char #\╭)
-(defparameter pretty-tree-bottom-corner-char #\╰)
-(defparameter pretty-tree-down-char #\┬)
-(defparameter pretty-tree-out-char #\├)
-(defparameter pretty-tree-node-char #\●)
+(defconst pretty-tree-horiz-char #\─)
+(defconst pretty-tree-vert-char #\│)
+(defconst pretty-tree-vert-end-char #\│)
+(defconst pretty-tree-left-corner-char #\╭)
+(defconst pretty-tree-right-corner-char #\╮)
+(defconst pretty-tree-top-corner-char #\╭)
+(defconst pretty-tree-bottom-corner-char #\╰)
+(defconst pretty-tree-down-char #\┬)
+(defconst pretty-tree-out-char #\├)
+(defconst pretty-tree-node-char #\●)
 
 ;;; ascii set
-;; (defparameter pretty-tree-horiz-char #\-)
-;; (defparameter pretty-tree-vert-char #\|)
-;; (defparameter pretty-tree-vert-end-char #\|)
-;; (defparameter pretty-tree-left-corner-char #\+)
-;; (defparameter pretty-tree-right-corner-char #\+)
-;; (defparameter pretty-tree-node-char #\^)
+;; (defconst pretty-tree-horiz-char #\-)
+;; (defconst pretty-tree-vert-char #\|)
+;; (defconst pretty-tree-vert-end-char #\|)
+;; (defconst pretty-tree-left-corner-char #\+)
+;; (defconst pretty-tree-right-corner-char #\+)
+;; (defconst pretty-tree-node-char #\^)
 
 (defparameter tree-default-weight 1)
 
