@@ -1,7 +1,9 @@
 (in-package :gk-trees)
 
-(defparameter pretty-tree-horiz-space 2) ; this should be at least 0
+(defparameter pretty-tree-horiz-space 1) ; this should be at least 0
 (defparameter pretty-tree-height-mult 2) ; this should be at least 1
+(defparameter pretty-tree-vertical-space 1)  ; this should be at least 0
+(defparameter pretty-tree-width-mult 2) ; this should be at least 1
 
 ;;; unicode set
 (defparameter pretty-tree-horiz-char #\─)
@@ -9,7 +11,10 @@
 (defparameter pretty-tree-vert-end-char #\│)
 (defparameter pretty-tree-left-corner-char #\╭)
 (defparameter pretty-tree-right-corner-char #\╮)
+(defparameter pretty-tree-top-corner-char #\╭)
+(defparameter pretty-tree-bottom-corner-char #\╰)
 (defparameter pretty-tree-down-char #\┬)
+(defparameter pretty-tree-out-char #\├)
 (defparameter pretty-tree-node-char #\●)
 
 ;;; ascii set
@@ -124,12 +129,17 @@
   (print-unreadable-object (object stream :type t)
     (format stream "with ~A leaves" (length (leafset object)))))
 
-(defun pp-tree-print (tree &optional (stream t))
-  (let* ((printer (pp-tree-printer tree))
-         (next-line (funcall printer nil)))
-    (loop while (string/= next-line "") do
-         (format stream "~A~%" next-line)
-         (setf next-line (funcall printer nil)))))
+(defun pp-tree-print (tree &key (stream t) (vertical nil))
+  (if vertical
+      (let* ((printer (pp-tree-printer tree))
+             (next-line (funcall printer nil)))
+        (loop while (string/= next-line "") do
+             (format stream "~A~%" next-line)
+             (setf next-line (funcall printer nil))))
+      (let ((printer (pp-tree-hprinter tree)))
+        (loop repeat (pp-tree-h-height tree) do
+             (funcall printer stream)
+             (format stream "~%")))))
 
 (defgeneric pp-tree-width (tree))
 
@@ -152,6 +162,15 @@
               :initial-value 0)))
 
 (defmethod pp-tree-height (tree) 1)
+
+(defgeneric pp-tree-h-height (tree))
+
+(defmethod pp-tree-h-height ((tree tree))
+  (let ((nleaves (length (leafset tree))))
+    (+ nleaves (* (1- nleaves) pretty-tree-vertical-space))))
+
+(defmethod pp-tree-h-height (tree)
+  1)
 
 (defun pp-tree-label-line (label width children-widths)
   "Makes a top line string for the label line of a tree.  WIDTH is the width
@@ -252,6 +271,77 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
         (when line
           (setf line ""))
         (format stream output)))))
+
+(defgeneric pp-tree-hprinter (tree)
+  (:documentation "Returns a closure like pp-tree-printer but for printing
+  horizontally."))
+
+(defmethod pp-tree-hprinter ((tree tree))
+  (assert (>= (length (edge-weights tree)) (length (children tree))))
+  (let* ((tree-label (if (label tree) (format nil "~A" (label tree))
+                         (string pretty-tree-node-char)))
+         (tree-height (pp-tree-h-height tree))
+         (tree-height-left tree-height)
+         (children-printers (mapcar #'pp-tree-hprinter (children tree)))
+         (edge-weights (edge-weights tree))
+         (children-heights (mapcar #'pp-tree-h-height (children tree)))
+         (children-heights-left (copy-list children-heights))
+         (space-left 0)
+         (state :before))
+    (lambda (stream)
+      ;; label line
+      (cond
+        ((= tree-height-left (ceiling (/ tree-height 2)))
+         ;; print the label
+         (format stream (if children-printers (subseq tree-label 0 1) tree-label)))
+        ((> space-left 0)
+         (format stream (string pretty-tree-vert-char)))
+        ((= (car children-heights-left) (ceiling (/ (car children-heights) 2)))
+         (case state
+           (:before (format stream (string pretty-tree-top-corner-char))
+                    (setf state :during))
+           (:during (if (cdr children-heights)
+                        (format stream (string pretty-tree-out-char))
+                        (progn
+                          (format stream
+                                  (string pretty-tree-bottom-corner-char))
+                          (setf state :after))))))
+        ((eq state :during)
+         (format stream (string pretty-tree-vert-char)))
+        (t
+         (format stream " ")))
+      ;; children
+      (if (> space-left 0)
+          (decf space-left)
+          (when children-printers
+            ;; edge
+            (loop repeat (* (car edge-weights) pretty-tree-width-mult) do
+                 (if (= (car children-heights-left)
+                        (ceiling (/ (car children-heights) 2)))
+                     (write-char pretty-tree-horiz-char)
+                     (write-char #\Space)))
+            ;; child
+            (funcall (car children-printers) stream)
+
+            (decf (car children-heights-left))
+            (when (= 0 (car children-heights-left))
+              (pop children-printers)
+              (pop edge-weights)
+              (pop children-heights)
+              (pop children-heights-left)
+              (setf space-left pretty-tree-vertical-space))))
+      (decf tree-height-left))))
+
+(defmethod pp-tree-hprinter (tree)
+  (let ((line (format nil "~A" tree)))
+    (lambda (stream)
+      (let ((output line))
+        (when line
+          (setf line ""))
+        (format stream output)))))
+
+(defmethod pp-tree-height (tree)
+  (pp-tree-printer tree))
 
 (defgeneric leafset (tree))
 
