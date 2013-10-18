@@ -6,16 +6,16 @@
 (defparameter pretty-tree-width-mult 2) ; this should be at least 1
 
 ;;; unicode set
-(defconst pretty-tree-horiz-char #\─)
-(defconst pretty-tree-vert-char #\│)
-(defconst pretty-tree-vert-end-char #\│)
-(defconst pretty-tree-left-corner-char #\╭)
-(defconst pretty-tree-right-corner-char #\╮)
-(defconst pretty-tree-top-corner-char #\╭)
-(defconst pretty-tree-bottom-corner-char #\╰)
-(defconst pretty-tree-down-char #\┬)
-(defconst pretty-tree-out-char #\├)
-(defconst pretty-tree-node-char #\●)
+(defconstant pretty-tree-horiz-char #\─)
+(defconstant pretty-tree-vert-char #\│)
+(defconstant pretty-tree-vert-end-char #\│)
+(defconstant pretty-tree-left-corner-char #\╭)
+(defconstant pretty-tree-right-corner-char #\╮)
+(defconstant pretty-tree-top-corner-char #\╭)
+(defconstant pretty-tree-bottom-corner-char #\╰)
+(defconstant pretty-tree-down-char #\┬)
+(defconstant pretty-tree-out-char #\├)
+(defconstant pretty-tree-node-char #\●)
 
 ;;; ascii set
 ;; (defconst pretty-tree-horiz-char #\-)
