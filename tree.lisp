@@ -843,3 +843,14 @@ metric."
 (defmethod canonicalise-tree (tree)
   tree)
 
+(defgeneric all-edge-weights (tree))
+
+(defmethod all-edge-weights ((tree tree))
+  (if (consp (edge-weights tree))
+      (append (edge-weights tree)
+              (reduce #'append (mapcar #'all-edge-weights (children tree))))
+      (list)))
+
+(defmethod all-edge-weights (tree)
+  (list))
+
