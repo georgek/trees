@@ -293,7 +293,9 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
       (cond
         ((= tree-height-left (ceiling (/ tree-height 2)))
          ;; print the label
-         (format stream (if children-printers (subseq tree-label 0 1) tree-label)))
+         (format stream (if children-printers
+                            (subseq tree-label 0 1)
+                            tree-label)))
         ((> space-left 0)
          (format stream (string pretty-tree-vert-char)))
         ((= (car children-heights-left) (ceiling (/ (car children-heights) 2)))
