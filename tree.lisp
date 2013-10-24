@@ -129,14 +129,29 @@
   (print-unreadable-object (object stream :type t)
     (format stream "with ~A leaves" (length (leafset object)))))
 
-(defun pp-tree-print (tree &key (stream t) (vertical nil))
+(defun pp-tree-width-multiplier (tree width)
+  "Calculates the width multiplier necessary to ensure TREE is no more than
+WIDTH wide when pretty printing horizontally."
+  (let* ((printer (pp-tree-hprinter tree))
+         (original-width (tree-height tree))
+         (multiplier (/ width original-width))
+         actual-width)
+    ;; now work out actual width when using that multiplier
+    (let ((pretty-tree-width-mult multiplier))
+     (setf actual-width
+           (loop repeat (pp-tree-h-height tree)
+              maximize (length (funcall printer nil)))))
+    (floor (/ (- (* 2 width) actual-width) original-width))))
+
+(defun pp-tree-print (tree &key (stream t) (vertical nil) (width 80))
   (if vertical
       (let* ((printer (pp-tree-printer tree))
              (next-line (funcall printer nil)))
         (loop while (string/= next-line "") do
              (format stream "~A~%" next-line)
              (setf next-line (funcall printer nil))))
-      (let ((printer (pp-tree-hprinter tree)))
+      (let ((printer (pp-tree-hprinter tree))
+            (pretty-tree-width-mult (pp-tree-width-multiplier tree width)))
         (loop repeat (pp-tree-h-height tree) do
              (funcall printer stream)
              (format stream "~%")))))
