@@ -324,7 +324,8 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
                               tree-label)))
           ((> space-left 0)
            (format output (string pretty-tree-vert-char)))
-          ((= (car children-heights-left) (ceiling (/ (car children-heights) 2)))
+          ((= (car children-heights-left)
+              (ceiling (/ (car children-heights) 2)))
            (case state
              (:before (format output (string pretty-tree-top-corner-char))
                       (setf state :during))
@@ -343,7 +344,8 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
             (decf space-left)
             (when children-printers
               (multiple-value-bind (edge-length *rounded-off-amount*)
-                  (round-to-one (+ (* (car edge-weights) pretty-tree-width-mult)
+                  (round-to-one (+ (* (car edge-weights)
+                                      pretty-tree-width-mult)
                                    *rounded-off-amount*))
                ;; edge
                (loop repeat (1- edge-length) do
