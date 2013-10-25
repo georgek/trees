@@ -315,38 +315,43 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
     (lambda (stream)
       (let ((output (make-array 80 :element-type 'character
                                 :fill-pointer 0 :initial-element #\Space)))
-        ;; label line
-        (cond
-          ((= tree-height-left (ceiling (/ tree-height 2)))
-           ;; print the label
-           (format output (if children-printers
-                              (subseq tree-label 0 1)
-                              tree-label)))
-          ((> space-left 0)
-           (format output (string pretty-tree-vert-char)))
-          ((= (car children-heights-left)
-              (ceiling (/ (car children-heights) 2)))
-           (case state
-             (:before (format output (string pretty-tree-top-corner-char))
-                      (setf state :during))
-             (:during (if (cdr children-heights)
-                          (format output (string pretty-tree-out-char))
-                          (progn
-                            (format output
-                                    (string pretty-tree-bottom-corner-char))
-                            (setf state :after))))))
-          ((eq state :during)
-           (format output (string pretty-tree-vert-char)))
-          (t
-           (format output " ")))
-        ;; children
-        (if (> space-left 0)
-            (decf space-left)
-            (when children-printers
-              (multiple-value-bind (edge-length *rounded-off-amount*)
-                  (round-to-one (+ (* (car edge-weights)
-                                      pretty-tree-width-mult)
-                                   *rounded-off-amount*))
+        (multiple-value-bind (edge-length *rounded-off-amount*)
+            (round-to-one (+ (* (car edge-weights)
+                                pretty-tree-width-mult)
+                             *rounded-off-amount*))
+          ;; label line
+          (cond
+            ((= tree-height-left (ceiling (/ tree-height 2)))
+             ;; print the label
+             (if (or (> (car edge-weights) 0)
+                     (> (car children-heights) 1)
+                     (> space-left 0))
+              (format output (if children-printers
+                                 (subseq tree-label 0 1)
+                                 tree-label))))
+            ((> space-left 0)
+             (format output (string pretty-tree-vert-char)))
+            ((= (car children-heights-left)
+                (ceiling (/ (car children-heights) 2)))
+             (if (or (> (car edge-weights) 0)
+                     (> (car children-heights) 1))
+              (case state
+                (:before (format output (string pretty-tree-top-corner-char))
+                         (setf state :during))
+                (:during (if (cdr children-heights)
+                             (format output (string pretty-tree-out-char))
+                             (progn
+                               (format output
+                                       (string pretty-tree-bottom-corner-char))
+                               (setf state :after)))))))
+            ((eq state :during)
+             (format output (string pretty-tree-vert-char)))
+            (t
+             (format output " ")))
+          ;; children
+          (if (> space-left 0)
+              (decf space-left)
+              (when children-printers
                 ;; edge
                 (loop repeat (1- edge-length) do
                      (if (= (car children-heights-left)
