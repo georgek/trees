@@ -347,22 +347,22 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
                   (round-to-one (+ (* (car edge-weights)
                                       pretty-tree-width-mult)
                                    *rounded-off-amount*))
-               ;; edge
-               (loop repeat (1- edge-length) do
-                    (if (= (car children-heights-left)
-                           (ceiling (/ (car children-heights) 2)))
-                        (format output "~c" pretty-tree-horiz-char)
-                        (incf (fill-pointer output))))
-               ;; child
-               (funcall (car children-printers) output)
+                ;; edge
+                (loop repeat (1- edge-length) do
+                     (if (= (car children-heights-left)
+                            (ceiling (/ (car children-heights) 2)))
+                         (format output "~c" pretty-tree-horiz-char)
+                         (incf (fill-pointer output))))
+                ;; child
+                (funcall (car children-printers) output)
 
-               (decf (car children-heights-left))
-               (when (= 0 (car children-heights-left))
-                 (pop children-printers)
-                 (pop edge-weights)
-                 (pop children-heights)
-                 (pop children-heights-left)
-                 (setf space-left pretty-tree-vertical-space)))))
+                (decf (car children-heights-left))
+                (when (= 0 (car children-heights-left))
+                  (pop children-printers)
+                  (pop edge-weights)
+                  (pop children-heights)
+                  (pop children-heights-left)
+                  (setf space-left pretty-tree-vertical-space)))))
         (decf tree-height-left)
         (format stream output)))))
 
