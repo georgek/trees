@@ -886,3 +886,7 @@ metric."
 (defmethod all-edge-weights (tree)
   (list))
 
+(defun childn (n tree)
+  (assert (< n (length (children tree))))
+  (nth n (children tree)))
+
