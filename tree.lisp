@@ -287,6 +287,15 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
           (setf line ""))
         (format stream output)))))
 
+(defun round-to-one (val)
+  (if (= 0 val)
+      (values 0 0)
+      (let ((rnd (max 1 (round val))))
+        (values rnd (- val rnd)))))
+
+(defvar *rounded-off-amount* 0
+  "The amount rounded off in drawing the branch to this tree.")
+
 (defgeneric pp-tree-hprinter (tree)
   (:documentation "Returns a closure like pp-tree-printer but for printing
   horizontally."))
@@ -333,22 +342,25 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
         (if (> space-left 0)
             (decf space-left)
             (when children-printers
-              ;; edge
-              (loop repeat (* (car edge-weights) pretty-tree-width-mult) do
-                   (if (= (car children-heights-left)
-                          (ceiling (/ (car children-heights) 2)))
-                       (format output "~c" pretty-tree-horiz-char)
-                       (incf (fill-pointer output))))
-              ;; child
-              (funcall (car children-printers) output)
+              (multiple-value-bind (edge-length *rounded-off-amount*)
+                  (round-to-one (+ (* (car edge-weights) pretty-tree-width-mult)
+                                   *rounded-off-amount*))
+               ;; edge
+               (loop repeat (1- edge-length) do
+                    (if (= (car children-heights-left)
+                           (ceiling (/ (car children-heights) 2)))
+                        (format output "~c" pretty-tree-horiz-char)
+                        (incf (fill-pointer output))))
+               ;; child
+               (funcall (car children-printers) output)
 
-              (decf (car children-heights-left))
-              (when (= 0 (car children-heights-left))
-                (pop children-printers)
-                (pop edge-weights)
-                (pop children-heights)
-                (pop children-heights-left)
-                (setf space-left pretty-tree-vertical-space))))
+               (decf (car children-heights-left))
+               (when (= 0 (car children-heights-left))
+                 (pop children-printers)
+                 (pop edge-weights)
+                 (pop children-heights)
+                 (pop children-heights-left)
+                 (setf space-left pretty-tree-vertical-space)))))
         (decf tree-height-left)
         (format stream output)))))
 
