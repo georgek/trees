@@ -236,7 +236,7 @@
                   (return-from ultrametric-lasso2 nil))
                 (setf tree (collapse component))
                 (when (dbg-on-p :lasso2)
-                  (pp-tree-print tree))
+                  (pp-tree-print tree :vertical t))
                 (let ((other-leaves (make-hash-table :test #'eq))
                       other-leaf)
                   (loop for cord in cords do
@@ -382,8 +382,8 @@
            (loop for component in (components mins) do
                 (setf tree (collapse (maxi-clique component)))
                 (dbg :lasso3 "Tree used cords: ~A~%" (used-cords tree))
-              (when (dbg-on-p :lasso3)
-                (pp-tree-print tree))
+                (when (dbg-on-p :lasso3)
+                  (pp-tree-print tree :vertical t))
                 (setf cords (collapse-cords cords (cords-vertices component)
                                             tree)))))
     tree))
