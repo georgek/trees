@@ -350,9 +350,7 @@
             (push cord (gethash (cord-right cord) collapsed-cords)))
            ((find (cord-right cord) clique-vertices)
             (push cord (gethash (cord-left cord) collapsed-cords)))
-           ((null (intersection (cords-vertices (list cord))
-                                component-vertices))
-            ;; cord is not incident with unused vertices in component
+           (t
             (push cord rest))))
     (loop for other-end being the hash-keys in collapsed-cords 
        for length = (length-vote (mapcar #'cord-length
