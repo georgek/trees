@@ -385,6 +385,12 @@
                 (when (dbg-on-p :lasso3)
                   (pp-tree-print tree :vertical t))
                 (setf cords (collapse-cords cords (cords-vertices component)
-                                            tree)))))
+                                            tree)))
+           ;; choose biggest component (can save others here)
+           (setf cords (reduce (lambda (c1 c2) (if (> (clique-leaves c1)
+                                                      (clique-leaves c2))
+                                                   c1
+                                                   c2))
+                               (components cords) :initial-value nil))))
     tree))
 
