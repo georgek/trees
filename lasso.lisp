@@ -332,6 +332,22 @@
         (car mid)
         (/ (+ (car mid) (cadr mid)) 2))))
 
+(defun low-quartile (list)
+  (let ((med (median list)))
+   (median (remove-if (lambda (x) (>= x med)) list))))
+
+(defun high-quartile (list)
+  (let ((med (median list)))
+   (median (remove-if (lambda (x) (<= x med)) list))))
+
+(defun remove-outliers (list)
+  (let* ((lq (low-quartile list))
+         (hq (high-quartile list))
+         (iqr (- hq lq)))
+    (remove-if (lambda (x) (or (> x (+ (* 1.5 iqr) hq))
+                               (< x (- (* 1.5 iqr) lq))))
+               list)))
+
 (defun mode (list)
   (let ((counts (make-hash-table)))
     (dbg :mode "~{~A~%~}~%" list)
