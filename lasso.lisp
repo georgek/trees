@@ -379,11 +379,10 @@
             (push cord (gethash (cord-left cord) collapsed-cords)))
            (t
             (push cord rest))))
-    (loop for other-end being the hash-keys in collapsed-cords 
-       for length = (mode (mapcar #'cord-length
-                                  (gethash other-end collapsed-cords)))
-       for real-cords = (remove-if-not (lambda (c) (= (cord-length c) length))
-                                       (gethash other-end collapsed-cords))
+    (loop for other-end being the hash-keys in collapsed-cords
+       for real-cords = (remove-outliers (gethash other-end collapsed-cords)
+                                         #'cord-length)
+       for length = (mean (mapcar #'cord-length real-cords))
        do
          (push (make-instance 'collapsed-cord
                               :left collapsed-tree :right other-end
