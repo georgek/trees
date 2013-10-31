@@ -341,12 +341,15 @@
    (median (remove-if (lambda (x) (< x med)) list))))
 
 (defun remove-outliers (list &optional (key #'identity))
+  "Returns the list with outliers removed or, if all elements are outliers,
+return just the mode."
   (let* ((lq (low-quartile (mapcar key list)))
          (hq (high-quartile (mapcar key list)))
          (iqr (- hq lq)))
-    (remove-if (lambda (x) (or (> (funcall key x) (+ (* 1.5 iqr) hq))
-                               (< (funcall key x) (- (* 1.5 iqr) lq))))
-               list)))
+    (or (remove-if (lambda (x) (or (> (funcall key x) (+ (* 1.5 iqr) hq))
+                                (< (funcall key x) (- (* 1.5 iqr) lq))))
+                list)
+        (list (mode list)))))
 
 (defun mode (list)
   (let ((counts (make-hash-table)))
