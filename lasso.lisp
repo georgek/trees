@@ -340,12 +340,12 @@
   (let ((med (median list)))
    (median (remove-if (lambda (x) (< x med)) list))))
 
-(defun remove-outliers (list)
-  (let* ((lq (low-quartile list))
-         (hq (high-quartile list))
+(defun remove-outliers (list &optional (key #'identity))
+  (let* ((lq (low-quartile (mapcar key list)))
+         (hq (high-quartile (mapcar key list)))
          (iqr (- hq lq)))
-    (remove-if (lambda (x) (or (> x (+ (* 1.5 iqr) hq))
-                               (< x (- (* 1.5 iqr) lq))))
+    (remove-if (lambda (x) (or (> (funcall key x) (+ (* 1.5 iqr) hq))
+                               (< (funcall key x) (- (* 1.5 iqr) lq))))
                list)))
 
 (defun mode (list)
