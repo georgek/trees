@@ -334,11 +334,11 @@
 
 (defun low-quartile (list)
   (let ((med (median list)))
-   (median (remove-if (lambda (x) (>= x med)) list))))
+   (median (remove-if (lambda (x) (> x med)) list))))
 
 (defun high-quartile (list)
   (let ((med (median list)))
-   (median (remove-if (lambda (x) (<= x med)) list))))
+   (median (remove-if (lambda (x) (< x med)) list))))
 
 (defun remove-outliers (list)
   (let* ((lq (low-quartile list))
