@@ -449,41 +449,19 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
     (t
      (error "Not triplet!"))))
 
-(defun left-child (tree)
-  (first (car tree)))
-
-(defun (setf left-child) (left-child tree)
-  (setf (first (car tree)) left-child))
-
-(defun right-child (tree)
-  (second (car tree)))
-
-(defun (setf right-child) (right-child tree)
-  (setf (second (car tree)) right-child))
-
-(defun left-edge-weight (tree)
-  (first (cdr tree)))
-
-(defun (setf left-edge-weight) (edge-weight tree)
-  (setf (first (cdr tree)) edge-weight))
-
-(defun right-edge-weight (tree)
-  (second (cdr tree)))
-
-(defun (setf right-edge-weight) (edge-weight tree)
-  (setf (second (cdr tree)) edge-weight))
-
 (defun nth-child (n tree)
-  (nth n (car tree)))
+  (assert (< n (length (children tree))))
+  (nth n (children tree)))
 
 (defun nth-edge-weight (n tree)
-  (nth n (cdr tree)))
+  (assert (< n (length (edge-weights tree))))
+  (nth n (edge-weights tree)))
 
 (defun last-child (tree)
-  (car (last (car tree))))
+  (car (last (children tree))))
 
 (defun last-edge-weight (tree)
-  (car (last (cdr tree))))
+  (car (last (edge-weights tree))))
 
 (defun tree-total-width (tree)
   (cond ((cherry-binaryp tree)
@@ -890,8 +868,4 @@ metric."
 
 (defmethod all-edge-weights (tree)
   (list))
-
-(defun childn (n tree)
-  (assert (< n (length (children tree))))
-  (nth n (children tree)))
 
