@@ -9,6 +9,10 @@
     (fresh-line *debug-io*)
     (apply #'format *debug-io* format-string args)))
 
+(defun dbgo (object)
+  (format *debug-io* "~A~%" object)
+  object)
+
 (defun set-debug (&rest ids)
   "Start dbg output on the given ids"
   (setf *dbg-ids* (union ids *dbg-ids*)))
