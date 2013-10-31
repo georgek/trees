@@ -325,7 +325,7 @@
   (/ (reduce #'+ list) (length list)))
 
 (defun median (list)
-  (let* ((list (sort list #'<))
+  (let* ((list (sort (copy-list list) #'<))
          (n (length list))
          (mid (nthcdr (floor (/ (1- n) 2)) list)))
     (if (/= 0 (rem n 2))
