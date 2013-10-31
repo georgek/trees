@@ -321,18 +321,29 @@
   (make-instance 'collapsed-cord :left (cord-left cord) :right (cord-right cord)
                  :length (cord-length cord)))
 
-(defun length-vote (lengths)
-  "Returns the most common length in list LENGTHS."
+(defun mean (list)
+  (/ (reduce #'+ list) (length list)))
+
+(defun median (list)
+  (let* ((list (sort list #'<))
+         (n (length list))
+         (mid (nthcdr (floor (/ (1- n) 2)) list)))
+    (if (/= 0 (rem n 2))
+        (car mid)
+        (/ (+ (car mid) (cadr mid)) 2))))
+
+(defun mode (list)
   (let ((counts (make-hash-table)))
-    (dbg :vote "~{~A~%~}~%" lengths)
-    (loop for length in lengths do
-         (if (gethash length counts)
-             (incf (gethash length counts))
-             (setf (gethash length counts) 1)))
+    (dbg :mode "~{~A~%~}~%" list)
+    (loop for item in list do
+         (if (gethash item counts)
+             (incf (gethash item counts))
+             (setf (gethash item counts) 1)))
     (loop with max-length = 0 with max
-       for length being the hash-keys in counts do
-         (when (> (gethash length counts) max-length)
-           (setf max length max-length (gethash length counts)))
+       for item being the hash-keys in counts do
+         (when (> (gethash item counts) max-length)
+           (setf max item
+                 max-length (gethash item counts)))
        finally (return max))))
 
 (defun collapse-cords (cords component-vertices collapsed-tree)
@@ -353,8 +364,8 @@
            (t
             (push cord rest))))
     (loop for other-end being the hash-keys in collapsed-cords 
-       for length = (length-vote (mapcar #'cord-length
-                                         (gethash other-end collapsed-cords)))
+       for length = (mode (mapcar #'cord-length
+                                  (gethash other-end collapsed-cords)))
        for real-cords = (remove-if-not (lambda (c) (= (cord-length c) length))
                                        (gethash other-end collapsed-cords))
        do

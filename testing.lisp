@@ -30,9 +30,6 @@
 
 (defparameter n-tests 100)
 
-(defun mean (list)
-  (/ (reduce #'+ list) (length list)))
-
 (defun random-test (degree leaves)
   (let ((ncords (/ (* leaves (1- leaves)) 2)))
     ;; (format t "ncords: ~d, nleaves: ~d~%~%" ncords leaves)
