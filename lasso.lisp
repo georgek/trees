@@ -313,13 +313,18 @@
 
 (defmethod initialize-instance :after ((cord collapsed-cord) &key)
   (when (null (real-cords cord))
-    (setf (real-cords cord) (list cord))))
+    (setf (real-cords cord) (list (cord (cord-left cord)
+                                        (cord-right cord)
+                                        (cord-length cord))))))
 
 (defgeneric collapsed-cord (object))
 
 (defmethod collapsed-cord ((cord cord))
   (make-instance 'collapsed-cord :left (cord-left cord) :right (cord-right cord)
-                 :length (cord-length cord)))
+                 :length (cord-length cord) :real-cords nil))
+
+(defmethod real-cords ((cord cord))
+  (list cord))
 
 (defun mean (list)
   (/ (reduce #'+ list) (length list)))
@@ -390,7 +395,7 @@ return just the mode."
          (push (make-instance 'collapsed-cord
                               :left collapsed-tree :right other-end
                               :length length
-                              :real-cords (reduce #'nconc
+                              :real-cords (reduce #'append
                                                   (mapcar #'real-cords
                                                           real-cords)))
                final-cords))
