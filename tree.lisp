@@ -129,6 +129,7 @@
   (print-unreadable-object (object stream :type t)
     (format stream "with ~A leaves" (length (leafset object)))))
 
+;;; TODO: This seems to work but it would be good to prove that it's correct
 (defun pp-tree-width-multiplier (tree width)
   "Calculates the width multiplier necessary to ensure TREE is no more than
 WIDTH wide when pretty printing horizontally."
