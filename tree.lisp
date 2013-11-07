@@ -6,16 +6,17 @@
 (defparameter pretty-tree-width-mult 2) ; this should be at least 1
 
 ;;; unicode set
-(defconstant pretty-tree-horiz-char #\─)
-(defconstant pretty-tree-vert-char #\│)
-(defconstant pretty-tree-vert-end-char #\│)
-(defconstant pretty-tree-left-corner-char #\╭)
-(defconstant pretty-tree-right-corner-char #\╮)
-(defconstant pretty-tree-top-corner-char #\╭)
-(defconstant pretty-tree-bottom-corner-char #\╰)
-(defconstant pretty-tree-down-char #\┬)
-(defconstant pretty-tree-out-char #\├)
-(defconstant pretty-tree-node-char #\●)
+(defparameter pretty-tree-horiz-char #\─)
+(defparameter pretty-tree-vert-char #\│)
+(defparameter pretty-tree-vert-end-char #\│)
+(defparameter pretty-tree-left-corner-char #\╭)
+(defparameter pretty-tree-right-corner-char #\╮)
+(defparameter pretty-tree-top-corner-char #\╭)
+(defparameter pretty-tree-bottom-corner-char #\╰)
+(defparameter pretty-tree-down-char #\┬)
+(defparameter pretty-tree-out-char #\├)
+(defparameter pretty-tree-hnode-char #\┤)
+(defparameter pretty-tree-vnode-char #\┴)
 
 ;;; ascii set
 ;; (defconst pretty-tree-horiz-char #\-)
@@ -229,7 +230,7 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
 (defmethod pp-tree-printer ((tree tree))
   (assert (>= (length (edge-weights tree)) (length (children tree))))
   (let* ((tree-label (if (label tree) (format nil "~A" (label tree))
-                         (string pretty-tree-node-char)))
+                         (string pretty-tree-vnode-char)))
          (tree-width (pp-tree-width tree))
          (children-printers (mapcar #'pp-tree-printer (children tree)))
          (children-next-line (mapcar (lambda (p) (funcall p nil))
@@ -304,7 +305,7 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
 (defmethod pp-tree-hprinter ((tree tree))
   (assert (>= (length (edge-weights tree)) (length (children tree))))
   (let* ((tree-label (if (label tree) (format nil "~A" (label tree))
-                         (string pretty-tree-node-char)))
+                         (string pretty-tree-hnode-char)))
          (tree-height (pp-tree-h-height tree))
          (tree-height-left tree-height)
          (children-printers (mapcar #'pp-tree-hprinter (children tree)))
@@ -643,7 +644,7 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
                 (setf (aref matrix top i)
                       pretty-tree-horiz-char))      ;left line
            (setf (aref matrix top (+ left node))
-                 pretty-tree-node-char) ;node
+                 pretty-tree-vnode-char) ;node
            (loop for i from (+ left node 1) to (+ left node re) do
                 (setf (aref matrix top i)
                       pretty-tree-horiz-char))           ;right line
@@ -676,7 +677,7 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
                 (h (* (nth-edge-weight 0 tree) pretty-tree-height-mult)))
            ;; node
            (setf (aref matrix top (+ left node))
-                 pretty-tree-node-char)
+                 pretty-tree-vnode-char)
            ;; vertical line
            (loop for j from (1+ top) to (+ top h -2) do
                 (setf (aref matrix j (+ left node))
