@@ -351,10 +351,9 @@ return just the mode."
   (let* ((lq (low-quartile (mapcar key list)))
          (hq (high-quartile (mapcar key list)))
          (iqr (- hq lq)))
-    (or (remove-if (lambda (x) (or (> (funcall key x) (+ hq (* 1.5 iqr)))
-                                   (< (funcall key x) (- lq (* 1.5 iqr)))))
-                   list)
-        (list (mode list)))))
+    (remove-if (lambda (x) (or (> (funcall key x) (+ hq (* 1.5 iqr)))
+                               (< (funcall key x) (- lq (* 1.5 iqr)))))
+               list)))
 
 (defun mode (list)
   (let ((counts (make-hash-table)))
