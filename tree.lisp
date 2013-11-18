@@ -64,6 +64,9 @@
                                           :initial-element
                                           tree-default-weight)))))
 
+(defun treep (object)
+  (typep object 'tree))
+
 (defun make-tree (tree)
   "Makes a tree from a Lisp tree."
   (if (consp tree)
