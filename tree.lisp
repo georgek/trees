@@ -409,7 +409,12 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
                 (vector-push-extend character new-string))))
     new-string))
 
-(defgeneric tikz-tree-print (tree &optional x y label output))
+(defparameter tikz-tree-print-root-width 0.02
+  "The width of the root where 1 is the width of the entire tree.")
+
+(defgeneric tikz-tree-print (tree &optional x y label output)
+  (:documentation "Prints TikZ output for drawing a tree with (La)TeX. The
+  optional parameters should be left as default."))
 
 (defmethod tikz-tree-print ((tree tree)
                             &optional (x 0) (y 0) (label "r") (output t))
@@ -417,6 +422,11 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
       (progn
         ;; this tree's root
         (format output "\\node (~A) at (~F,~F) {};~%" label x y)
+        (when (= x 0)
+          (format output "\\node (rr) at (~F,~F) {};~%"
+                  (- (* (tree-height tree) tikz-tree-print-root-width))
+                  y)
+          (format output "\\draw (~A.center) -- (rr.center);~%" label))
         (loop with y = (- y (/ (1- (length (leafset tree))) 2))
            for child in (children tree)
            for i from 1
