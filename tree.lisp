@@ -387,6 +387,61 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
 (defmethod pp-tree-height (tree)
   (pp-tree-printer tree))
 
+(defun vector-push-extend-vector (new-elements vector)
+  (loop for item across new-elements do
+       (vector-push-extend item vector))
+  vector)
+
+(defun texify-string (string)
+  (let ((new-string (make-array (length string) :element-type 'character
+                                :fill-pointer 0 :adjustable t)))
+    (loop for character across string do
+         (cond ((find character "&%$#_{}")
+                (vector-push-extend #\\ new-string)
+                (vector-push-extend character new-string))
+               ((char= #\~ character)
+                (vector-push-extend-vector "\\textasciitilde" new-string))
+               ((char= #\^ character)
+                (vector-push-extend-vector "\\textasciicircum" new-string))
+               ((char= #\\ character)
+                (vector-push-extend-vector "\\textbackslash" new-string))
+               (t
+                (vector-push-extend character new-string))))
+    new-string))
+
+(defgeneric tikz-tree-print (tree &optional x y label output))
+
+(defmethod tikz-tree-print ((tree tree)
+                            &optional (x 0) (y 0) (label "r") (output t))
+  (if (consp (children tree))
+      (progn
+        ;; this tree's root
+        (format output "\\node (~A) at (~F,~F) {};~%" label x y)
+        (loop with y = (- y (/ (1- (length (leafset tree))) 2))
+           for child in (children tree)
+           for i from 1
+           for child-label = (format nil "~A~D" label i)
+           for child-height in (edge-weights tree)
+           for child-width = (1- (length (leafset child)))
+           do
+             ;; print each child
+             (tikz-tree-print child
+                              (+ x child-height)
+                              (+ y (/ child-width 2))
+                              child-label
+                              output)
+             ;; join root to child's root
+             (format output "\\draw (~A.center) |- (~A.center);~%"
+                     label child-label)
+             (incf y (1+ child-width))))
+      ;; tree is a leaf, print label
+      (format output "\\node[label=right:{~A}] (~A) at (~F,~F) {};~%"
+              (texify-string (format nil "~A" (label tree))) label x y)))
+
+(defmethod tikz-tree-print (tree &optional (x 0) (y 0) (label "r") (output t))
+  (format output "\\node[label=right:{~A}] (~A) at (~F,~F) {};~%"
+          (texify-string (format nil "~A" tree)) label x y))
+
 (defgeneric leafset (tree))
 
 (defmethod leafset ((tree tree))
