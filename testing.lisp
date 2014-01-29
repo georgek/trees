@@ -105,8 +105,11 @@
                       cords)))))
    cords))
 
-(defun csv-test-pgfplots (filename)
-  (let* ((cords (csv-to-cords filename))
+(defun csv-test-pgfplots (filename &key (limit most-positive-fixnum)
+                                     (delimiter #\,) (labelled nil)
+                                     (truncate-labels nil))
+  (let* ((cords (csv-to-cords filename :limit limit :delimiter delimiter :labelled labelled
+                              :truncate-labels truncate-labels))
          (ncords (length cords))
          (leaves (length (cords-vertices cords))))
     (format t " mcords  nleaves   ncords~%")
