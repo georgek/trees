@@ -118,7 +118,7 @@
                (nleaves (list))
                (recovered-cords (list)))
            (loop repeat n-tests
-              for mcords = (mess-up-conn cords (/ i 100) nil)
+              for mcords = (mess-up-conn cords (/ i 100))
               for l-tree = (ultrametric-lasso3 mcords)
               do
                 (setf nmcords (length mcords))
