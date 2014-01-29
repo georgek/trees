@@ -16,14 +16,14 @@
                               0)))
            cords)))
 
-(defun mess-up-cords (cords rem vary)
+(defun mess-up-cords (cords rem &optional (vary 0))
   "Messes up cords by removing the proportion REM and varying lengths by
   proportion VARY"
   (let* ((n (length cords))
          (nrem (round (* n rem))))
     (add-noise-to-cords (select-random cords (- n nrem)) vary)))
 
-(defun mess-up-conn (cords rem vary)
+(defun mess-up-conn (cords rem &optional (vary 0))
   (loop for mcords = (mess-up-cords cords rem vary) do
        (when (= (length (components mcords)) 1)
          (return mcords))))
