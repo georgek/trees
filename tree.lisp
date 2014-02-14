@@ -84,8 +84,10 @@
       (make-instance 'tree :children (mapcar #'make-tree tree))
       (make-instance 'tree :label tree)))
 
-(defun make-tree-phylip (string &key (truncate-labels nil))
-  "Makes a tree from output from phylip."
+(defun make-tree-phylip (string &key (truncate-labels nil) (index nil))
+  "Makes a tree from output from phylip.  If an index is given then the labels
+should be integers which will be translated to the nth (beginning with 1)
+value in the index."
   (let ((current-tree (list (make-tree nil)))
         (current-string (make-array 10 :element-type 'character
                                     :fill-pointer 0 :adjustable t)))
@@ -103,13 +105,16 @@
                         (edge-weights (car current-tree)))
                   (setf (fill-pointer current-string) 0)))
            (#\: (when (> (fill-pointer current-string) 0)
-                  (when truncate-labels
-                   (setf (fill-pointer current-string)
-                         (min (fill-pointer current-string) truncate-labels)))
-                  (push (reduce (lambda (s1 s2) (concatenate 'string s1 "_" s2))
-                                (split-string (copy-seq current-string) #\_))
-                        (children (car current-tree)))
-                  (setf (fill-pointer current-string) 0)))
+                  (let ((label (copy-seq current-string)))
+                    (when index
+                      (dbg :mktrph "index~%")
+                      (setf label (nth (1- (parse-integer label)) index)))
+                    (when truncate-labels
+                      (setf label (subseq label 0 (min (length label) truncate-labels))))
+                    (push (reduce (lambda (s1 s2) (concatenate 'string s1 "_" s2))
+                                  (split-string label #\_))
+                          (children (car current-tree)))
+                    (setf (fill-pointer current-string) 0))))
            (#\Tab nil)
            (#\Newline nil)
            (#\; nil)
