@@ -880,7 +880,7 @@ DEGREE."
   (list (list tree)))
 
 (defun sets-equal (list1 list2)
-  (null (set-exclusive-or list1 list2)))
+  (null (set-exclusive-or list1 list2 :test #'equal)))
 
 (defun tree-distance (tree1 tree2)
   "The distance between TREE1 and TREE2 according to the Robinson-Foulds
