@@ -138,7 +138,7 @@
   "Calculates the width multiplier necessary to ensure TREE is no more than
 WIDTH wide when pretty printing horizontally."
   (let* ((printer (pp-tree-hprinter tree))
-         (original-width (tree-height tree))
+         (original-width (1+ (tree-height tree)))
          (multiplier (/ width original-width))
          actual-width)
     ;; now work out actual width when using that multiplier
