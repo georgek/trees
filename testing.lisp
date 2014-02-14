@@ -140,3 +140,30 @@
           do (push (tree-distance otree ctree) distances))
        (format t "~7,2f ~7,2f~%" i (mean distances))))
 
+;;; this test measures the robinson-foulds between trees built from partial
+;;; distances and the tree built from the complete distance
+(defun partial-rob-foulds (cords)
+  (let ((comp-tree (ultrametric-lasso3 cords)))
+    (format t "missing  mean      min      max~%")
+    (loop for rem from 10 to 90 by 10
+       for dists = (list)
+       do
+         (loop repeat n-tests do
+              (push (tree-distance
+                     comp-tree
+                     (ultrametric-lasso3 (mess-up-conn cords (/ rem 100))))
+                    dists))
+         (format t "~f  ~7,2f  ~7,2f  ~7,2f~%"
+                 rem (mean dists) (reduce #'min dists) (reduce #'max dists)))))
+
+;;; this test how many times a given cluster is present in a constructed tree
+(defun partial-cluster (cords rem cluster)
+  (let ((times-present 0.0))
+    (loop repeat n-tests
+       for tree = (ultrametric-lasso3 (mess-up-conn cords rem))
+       do
+         (when (member cluster (tree-clusters tree)
+                       :test #'sets-equal)
+           (incf times-present)))
+    (format t "Present: ~f%~%" (* (/ times-present n-tests) 100))))
+
