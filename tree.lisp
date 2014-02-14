@@ -147,16 +147,18 @@
 (defun pp-tree-width-multiplier (tree width)
   "Calculates the width multiplier necessary to ensure TREE is no more than
 WIDTH wide when pretty printing horizontally."
-  (let* ((printer (pp-tree-hprinter tree))
-         (original-width (1+ (tree-height tree)))
-         (multiplier (/ width original-width))
-         actual-width)
-    ;; now work out actual width when using that multiplier
-    (let ((pretty-tree-width-mult multiplier))
-     (setf actual-width
-           (loop repeat (pp-tree-h-height tree)
-              maximize (length (funcall printer nil)))))
-    (floor (/ (- (* 2 width) actual-width) original-width))))
+  (if (= (tree-height tree) 0)
+      1
+      (let* ((printer (pp-tree-hprinter tree))
+             (original-width (tree-height tree))
+             (multiplier (/ width original-width))
+             actual-width)
+        ;; now work out actual width when using that multiplier
+        (let ((pretty-tree-width-mult multiplier))
+          (setf actual-width
+                (loop repeat (pp-tree-h-height tree)
+                   maximize (length (funcall printer nil)))))
+        (floor (/ (- (* 2 width) actual-width) original-width)))))
 
 (defun pp-tree-print (tree &key (stream t) (vertical nil) (width 80))
   (if vertical
