@@ -449,7 +449,7 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
               (texify-string (format nil "~A" (label tree))) label x y)))
 
 (defmethod tikz-tree-print (tree &optional (x 0) (y 0) (label "r") (output t))
-  (format output "\\node[label=right:{~A}] (~A) at (~F,~F) {};~%"
+  (format output "\\node[label=right:{$~A$}] (~A) at (~F,~F) {};~%"
           (texify-string (format nil "~A" tree)) label x y))
 
 (defgeneric leafset (tree))
