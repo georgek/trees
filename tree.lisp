@@ -17,6 +17,7 @@
 (defparameter pretty-tree-out-char #\├)
 (defparameter pretty-tree-hnode-char #\┤)
 (defparameter pretty-tree-vnode-char #\┴)
+(defparameter pretty-tree-cross-char #\┼)
 
 ;;; ascii set
 ;; (defconst pretty-tree-horiz-char #\-)
@@ -320,76 +321,82 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
 (defmethod pp-tree-hprinter ((tree tree))
   (assert (>= (length (edge-weights tree)) (length (children tree))))
   (if (consp (children tree))
-   (let* ((tree-label (if (label tree) (format nil "~A" (label tree))
-                          (string pretty-tree-hnode-char)))
-          (tree-height (pp-tree-h-height tree))
-          (tree-height-left tree-height)
-          (children-printers (mapcar #'pp-tree-hprinter (children tree)))
-          (edge-weights (edge-weights tree))
-          (children-heights (mapcar #'pp-tree-h-height (children tree)))
-          (children-heights-left (copy-list children-heights))
-          (space-left 0)
-          (state :before))
-     (lambda (stream)
-       (let ((output (make-array 80 :element-type 'character
-                                 :fill-pointer 0 :initial-element #\Space)))
-         (multiple-value-bind (edge-length *rounded-off-amount*)
-             (round-to-one (+ (* (car edge-weights)
-                                 pretty-tree-width-mult)
-                              *rounded-off-amount*))
-           ;; label line
-           (cond
-             ((= tree-height-left (ceiling (/ tree-height 2)))
-              ;; print the label
-              (if (or (> (car edge-weights) 0)
-                      (> (car children-heights) 1)
-                      (> space-left 0))
-                  (format output (if children-printers
-                                     (subseq tree-label 0 1)
-                                     tree-label))))
-             ((> space-left 0)
-              (format output (string pretty-tree-vert-char)))
-             ((= (car children-heights-left)
-                 (ceiling (/ (car children-heights) 2)))
-              (if (or (> (car edge-weights) 0)
-                      (> (car children-heights) 1))
-                  (case state
-                    (:before (format output (string pretty-tree-top-corner-char))
-                             (setf state :during))
-                    (:during (if (cdr children-heights)
-                                 (format output (string pretty-tree-out-char))
-                                 (progn
-                                   (format output
-                                           (string pretty-tree-bottom-corner-char))
-                                   (setf state :after)))))))
-             ((eq state :during)
-              (format output (string pretty-tree-vert-char)))
-             (t
-              (format output " ")))
-           ;; children
-           (if (> space-left 0)
-               (decf space-left)
-               (when children-printers
-                 ;; edge
-                 (loop repeat (1- edge-length) do
-                      (if (= (car children-heights-left)
-                             (ceiling (/ (car children-heights) 2)))
-                          (format output "~c" pretty-tree-horiz-char)
-                          (incf (fill-pointer output))))
-                 ;; child
-                 (funcall (car children-printers) output)
+      (let* ((tree-label (if (label tree) (format nil "~A" (label tree))
+                             nil))
+             (tree-height (pp-tree-h-height tree))
+             (tree-height-left tree-height)
+             (children-printers (mapcar #'pp-tree-hprinter (children tree)))
+             (edge-weights (edge-weights tree))
+             (children-heights (mapcar #'pp-tree-h-height (children tree)))
+             (children-heights-left (copy-list children-heights))
+             (space-left 0)
+             (state :before))
+        (lambda (stream)
+          (let ((output (make-array 80 :element-type 'character
+                                    :fill-pointer 0 :initial-element #\Space)))
+            (multiple-value-bind (edge-length *rounded-off-amount*)
+                (round-to-one (+ (* (car edge-weights)
+                                    pretty-tree-width-mult)
+                                 *rounded-off-amount*))
+              ;; label line
+              (cond
+                ((= tree-height-left (ceiling (/ tree-height 2)))
+                 ;; print the label
+                 (when (or (> (car edge-weights) 0)
+                           (> (car children-heights) 1)
+                           (> space-left 0))
+                   (if tree-label
+                       (format output (if children-printers
+                                          (subseq tree-label 0 1)
+                                          tree-label))
+                       (if (and (= space-left 0)
+                                (= (car children-heights-left)
+                                   (ceiling (/ (car children-heights) 2))))
+                           (format output (string pretty-tree-cross-char))
+                           (format output (string pretty-tree-hnode-char))))))
+                ((> space-left 0)
+                 (format output (string pretty-tree-vert-char)))
+                ((= (car children-heights-left)
+                    (ceiling (/ (car children-heights) 2)))
+                 (if (or (> (car edge-weights) 0)
+                         (> (car children-heights) 1))
+                     (case state
+                       (:before (format output (string pretty-tree-top-corner-char))
+                                (setf state :during))
+                       (:during (if (cdr children-heights)
+                                    (format output (string pretty-tree-out-char))
+                                    (progn
+                                      (format output
+                                              (string pretty-tree-bottom-corner-char))
+                                      (setf state :after)))))))
+                ((eq state :during)
+                 (format output (string pretty-tree-vert-char)))
+                (t
+                 (format output " ")))
+              ;; children
+              (if (> space-left 0)
+                  (decf space-left)
+                  (when children-printers
+                    ;; edge
+                    (loop repeat (1- edge-length) do
+                         (if (= (car children-heights-left)
+                                (ceiling (/ (car children-heights) 2)))
+                             (format output "~c" pretty-tree-horiz-char)
+                             (incf (fill-pointer output))))
+                    ;; child
+                    (funcall (car children-printers) output)
 
-                 (decf (car children-heights-left))
-                 (when (= 0 (car children-heights-left))
-                   (pop children-printers)
-                   (pop edge-weights)
-                   (pop children-heights)
-                   (pop children-heights-left)
-                   (setf space-left pretty-tree-vertical-space)))))
-         (decf tree-height-left)
-         (format stream output))))
-   ;; tree has no children
-   (pp-tree-hprinter (label tree))))
+                    (decf (car children-heights-left))
+                    (when (= 0 (car children-heights-left))
+                      (pop children-printers)
+                      (pop edge-weights)
+                      (pop children-heights)
+                      (pop children-heights-left)
+                      (setf space-left pretty-tree-vertical-space)))))
+            (decf tree-height-left)
+            (format stream output))))
+      ;; tree has no children
+      (pp-tree-hprinter (label tree))))
 
 (defmethod pp-tree-hprinter (tree)
   (let ((line (format nil "~A" tree)))
