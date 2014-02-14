@@ -327,6 +327,7 @@
   (list cord))
 
 (defun mean (list)
+  (dbg :mean "mean diff: ~D~%" (- (reduce #'max list) (reduce #'min list)))
   (/ (reduce #'+ list) (length list)))
 
 (defun median (list)
