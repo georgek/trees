@@ -64,6 +64,16 @@
                                           :initial-element
                                           tree-default-weight)))))
 
+;;; methods for other lisp objects
+(defmethod label (tree)
+  (format nil "~A" tree))
+
+(defmethod children (tree)
+  nil)
+
+(defmethod edge-weights (tree)
+  nil)
+
 (defun treep (object)
   (typep object 'tree))
 
