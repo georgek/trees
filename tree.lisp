@@ -857,12 +857,14 @@ DEGREE."
 (defmethod tree-clusters (tree)
   (list (list tree)))
 
+(defun sets-equal (list1 list2)
+  (null (set-exclusive-or list1 list2)))
+
 (defun tree-distance (tree1 tree2)
   "The distance between TREE1 and TREE2 according to the Robinson-Foulds
 metric."
   (length (set-difference (tree-clusters tree1) (tree-clusters tree2)
-                          :test (lambda (a b)
-                                  (= (length (set-difference a b)) 0)))))
+                          :test #'sets-equal)))
 
 (defun tree-make-ultrametric (tree)
   (let ((height (tree-height tree)))
