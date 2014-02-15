@@ -144,17 +144,18 @@
 ;;; distances and the tree built from the complete distance
 (defun partial-rob-foulds (cords)
   (let ((comp-tree (ultrametric-lasso3 cords)))
-    (format t "missing  mean      min      max~%")
+    (format t "missing  mean      min      max     minc     maxc~%")
     (loop for rem from 10 to 90 by 10
        for dists = (list)
+       for ncords = (list)
+       for ntree = (ultrametric-lasso3 (mess-up-conn cords (/ rem 100)))
        do
          (loop repeat n-tests do
-              (push (tree-distance
-                     comp-tree
-                     (ultrametric-lasso3 (mess-up-conn cords (/ rem 100))))
-                    dists))
-         (format t "~f  ~7,2f  ~7,2f  ~7,2f~%"
-                 rem (mean dists) (reduce #'min dists) (reduce #'max dists)))))
+              (push (tree-distance comp-tree ntree) dists)
+              (push (length (leafset ntree)) ncords))
+         (format t "~f  ~7,2f  ~7,2f  ~7,2f  ~7d  ~7d~%"
+                 rem (mean dists) (reduce #'min dists) (reduce #'max dists)
+                 (reduce #'min ncords) (reduce #'max ncords)))))
 
 ;;; this test how many times a given cluster is present in a constructed tree
 (defun partial-cluster (cords rem cluster)
