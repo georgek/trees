@@ -149,6 +149,16 @@ value in the index."
   (print-unreadable-object (object stream :type t)
     (format stream "with ~A leaves" (length (leafset object)))))
 
+;;; Tree pretty printing
+
+;;; Pretty printing could be done an obvious recursive fashion by printing
+;;; each subtree into a grid of characters.  But instead we do it line by
+;;; line.  This requires that bits of output from subtrees are interpolated
+;;; together on each line of output.  To do this we generate a closure for a
+;;; tree which prints one line of its output to the given stream each time it
+;;; is called.  Then for a whole tree we just generate the printer closures
+;;; for each child tree and call them in order.
+
 ;;; TODO: This seems to work but it would be good to prove that it's correct
 (defun pp-tree-width-multiplier (tree width)
   "Calculates the width multiplier necessary to ensure TREE is no more than
