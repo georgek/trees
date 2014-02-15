@@ -29,7 +29,7 @@
 (defmacro cords (&rest cords)
   `',(mapcar (lambda (c) (cord (car c) (cadr c) (caddr c))) cords))
 
-(defun cords-equal (cord1 cord2 &optional (test #'eq))
+(defun cords-equal (cord1 cord2 &optional (test #'equal))
   (or (and (funcall test (cord-left cord1) (cord-left cord2))
            (funcall test (cord-right cord1) (cord-right cord2)))
       (and (funcall test (cord-left cord1) (cord-right cord2))
