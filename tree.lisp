@@ -978,26 +978,29 @@ metric."
 ;;; this actually does subtree calculation but can return a tree with a degree
 ;;; 1 root which needs to be trimmed
 (defun tree-subtree-untrimmed (tree leafset)
-  (let ((children (list))
-        (edge-weights (list))
-        subtree)
-    (loop for child in (children tree)
-       for edge-weight in (edge-weights tree)
-       do
-         (when (intersection leafset (leafset child) :test #'equal)
-           (push child children)
-           (push edge-weight edge-weights)))
-    (setf subtree (make-instance 'tree
-                                 :children (mapcar (lambda (c) (tree-subtree-untrimmed c leafset))
-                                                   children)
-                                 :edge-weights edge-weights :label (label tree)))
-    ;; remove degree one vertices in children
-    (loop for childc on (children subtree)
-       for edge-weightc on (edge-weights subtree)
-       do
-         (when (= (length (children (car childc))) 1)
-           (setf (car edge-weightc) (+ (car edge-weightc)
-                                       (nth-edge-weight 0 (car childc))))
-           (setf (car childc) (nth-child 0 (car childc)))))
-    subtree))
+  (if (null (children tree))
+      (car (member tree leafset))
+      (let ((children (list))
+            (edge-weights (list))
+            subtree)
+        (loop for child in (children tree)
+           for edge-weight in (edge-weights tree)
+           do
+             (when (intersection leafset (leafset child) :test #'equal)
+               (push child children)
+               (push edge-weight edge-weights)))
+        (setf subtree (make-instance 'tree
+                                     :children (mapcar (lambda (c)
+                                                         (tree-subtree-untrimmed c leafset))
+                                                       children)
+                                     :edge-weights edge-weights :label (label tree)))
+        ;; remove degree one vertices in children
+        (loop for childc on (children subtree)
+           for edge-weightc on (edge-weights subtree)
+           do
+             (when (= (length (children (car childc))) 1)
+               (setf (car edge-weightc) (+ (car edge-weightc)
+                                           (nth-edge-weight 0 (car childc))))
+               (setf (car childc) (nth-child 0 (car childc)))))
+        subtree)))
 
