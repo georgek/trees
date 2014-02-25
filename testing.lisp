@@ -168,3 +168,33 @@
            (incf times-present)))
     (format t "Present: ~f%~%" (* (/ times-present n-tests) 100))))
 
+;;; this tests how many leaves a supertree has when made from two smaller
+;;; matrices, TREE-SIZE is the size of the leafsets of the subtrees,
+;;; OVERLAP-SIZE is the number leaves they have in common
+(defun supertree-test (tree-size overlap-size &optional (degree 2))
+  (assert (> tree-size overlap-size))
+  (let* ((nleaves (- (* 2 tree-size) overlap-size))
+         (supertree (make-random-tree (range 1 nleaves) degree))
+         (subtree1 (tree-subtree supertree (range 1 tree-size)))
+         (subtree2 (tree-subtree supertree (range (1+ (- tree-size overlap-size))
+                                                  nleaves))))
+    (setf supertree (ultrametric-lasso3 (union (tree-distances subtree1)
+                                               (tree-distances subtree2)
+                                               :test #'cords-equal)))
+    (when (<= (length (leafset supertree)) 5)
+      (pp-tree-print supertree))
+    (length (leafset supertree))))
+
+(defun repeat-test (function)
+  "Repeatedly call a function to get a min, max and mean value."
+  (loop repeat n-tests
+     for value = (funcall function)
+     collecting value into values
+     finally
+       (return (list (reduce #'min values) (reduce #'max values) (mean values)))))
+
+(defun format-single (values)
+  "VALUES should be a list with min, max and mean."
+  (format t "min:  ~7,2f~%max:  ~7,2f~%mean: ~7,2f~%"
+          (first values) (second values) (third values)))
+
