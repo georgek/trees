@@ -859,6 +859,20 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
                      'tree :children (list new-leaf tree))))
     (tree-make-ultrametric tree)))
 
+(defun make-balanced-tree (x)
+  "Makes a balanced tree with as much of leafset X as possible"
+  (assert (> (length x) 1))
+  (setf x (mapcar #'make-tree (remove-duplicates x)))
+  ;; use a random selection of largest power of 2 possible
+  (setf x (shuffle (select-random x (expt 2 (floor (log (length x) 2))))))
+  (if (> (length x) 2)
+      (make-instance
+       'tree :children (list (make-balanced-tree
+                              (subseq x 0 (/ (length x) 2)))
+                             (make-balanced-tree
+                              (subseq x (/ (length x) 2) (length x)))))
+      (make-instance 'tree :children (list (first x) (second x)))))
+
 (defun make-random-tree (x &optional (degree 2))
   "Makes a random tree with leafset X and degree less than or equal to
 DEGREE."
