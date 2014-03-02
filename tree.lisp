@@ -844,6 +844,21 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
          (setf (edge-weights old-leaf) (list 1 1)))
     (tree-make-ultrametric tree)))
 
+(defun make-caterpillar-tree (x)
+  "Makes a caterpillar tree with leafset X"
+  (assert (> (length x) 1))
+  (setf x (mapcar #'make-tree (remove-duplicates x)))
+  (let* ((leaves (select-random x 2))
+         (tree (make-instance 'tree :children leaves))
+         (rest (set-difference x leaves)))
+    (loop while (consp rest)
+       for new-leaf = (car (select-random rest 1))
+       do
+         (setf rest (remove new-leaf rest :test #'eq))
+         (setf tree (make-instance
+                     'tree :children (list new-leaf tree))))
+    (tree-make-ultrametric tree)))
+
 (defun make-random-tree (x &optional (degree 2))
   "Makes a random tree with leafset X and degree less than or equal to
 DEGREE."
