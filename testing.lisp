@@ -194,6 +194,17 @@
      finally
        (return (list (reduce #'min values) (reduce #'max values) (mean values)))))
 
+(defun supertree-overlap-test (tree-size max-overlap &optional (degree 2))
+  (assert (> tree-size max-overlap))
+  (format t "overlap  min       max      mean~%")
+  (loop for overlap-size from 1 to max-overlap
+     for sizes = (repeat-test (lambda ()
+                                (supertree-test tree-size overlap-size degree)))
+     for percentages = (mapcar (lambda (s) (/ s (- (* 2 tree-size) overlap-size))) sizes)
+     do
+       (format t "~,3d    ~7,2f   ~7,2f   ~7,2f~%"
+               overlap-size (first percentages) (second percentages) (third percentages))))
+
 (defun format-single (values)
   "VALUES should be a list with min, max and mean."
   (format t "min:  ~7,2f~%max:  ~7,2f~%mean: ~7,2f~%"
