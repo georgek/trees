@@ -825,6 +825,7 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
 
 (defun make-random-binary (x)
   "Makes a random binary tree with leafset X using the Yule-Harding model"
+  (assert (> (length x) 1))
   (setf x (mapcar #'make-tree (remove-duplicates x)))
   (let* ((leaves (select-random x 2))
          (tree (make-instance 'tree :children leaves))
