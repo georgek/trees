@@ -842,7 +842,7 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
          (setf (label old-leaf) nil)
          (setf (children old-leaf) (list new-leaf new-old-leaf))
          (setf (edge-weights old-leaf) (list 1 1)))
-    tree))
+    (tree-make-ultrametric tree)))
 
 (defun make-random-tree (x &optional (degree 2))
   "Makes a random tree with leafset X and degree less than or equal to
