@@ -181,7 +181,8 @@
     (setf supertree (ultrametric-lasso3 (union (tree-distances subtree1)
                                                (tree-distances subtree2)
                                                :test #'cords-equal)))
-    (when (<= (length (leafset supertree)) 5)
+    (when (and (dbg-on-p :supertree-test)
+               (<= (length (leafset supertree)) 5))
       (pp-tree-print supertree))
     (length (leafset supertree))))
 
