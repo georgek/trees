@@ -11,6 +11,14 @@
             (loop for three on (cdr two) collecting
                  (list (car one) (car two) (car three))))))
 
+(defun choose4 (list)
+  (assert (>= (length list) 4))
+  (loop for one on list append
+       (loop for two on (cdr one) append
+            (loop for three on (cdr two) append
+                 (loop for four on (cdr three) collecting
+                      (list (car one) (car two) (car three) (car four)))))))
+
 ;;; checks if leaf is member of tree
 (defun tree-member (tree leaf &optional (test #'equal))
   (cond ((cherry-binaryp tree)
