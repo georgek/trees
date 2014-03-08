@@ -17,11 +17,19 @@
            cords)))
 
 (defun mess-up-cords (cords rem &optional (vary 0))
-  "Messes up cords by removing the proportion REM and varying lengths by
-  proportion VARY"
-  (let* ((n (length cords))
-         (nrem (round (* n rem))))
-    (add-noise-to-cords (select-random cords (- n nrem)) vary)))
+  "Messes up cords by removing REM from the implied matrix and varying lengths
+  by proportion VARY"
+  (let* ((nleaves (length (remove-duplicates
+                           (append (mapcar #'cord-left cords)
+                                   (mapcar #'cord-right cords)))))
+         (whole-matrix (append cords cords
+                               (make-list nleaves :initial-element :identity)))
+         (n (length whole-matrix))
+         (nrem (round (* n rem)))
+         (rem-matrix (select-random whole-matrix (- n nrem))))
+    (add-noise-to-cords
+     (remove-duplicates (remove :identity rem-matrix :test #'eq) :test #'eq)
+     vary)))
 
 (defun mess-up-conn (cords rem &optional (vary 0))
   (loop for mcords = (mess-up-cords cords rem vary) do
