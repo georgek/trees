@@ -5,6 +5,7 @@
 
 ;;; returns list choose 3
 (defun choose3 (list)
+  (assert (>= (length list) 3))
   (loop for one on list append
        (loop for two on (cdr one) append
             (loop for three on (cdr two) collecting
