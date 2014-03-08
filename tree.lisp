@@ -933,6 +933,18 @@ metric."
   (length (set-exclusive-or (tree-clusters tree1) (tree-clusters tree2)
                             :test #'sets-equal)))
 
+;;; really naive way to calculate quartet distance (extremely slow)
+(defun quartet-distance (tree1 tree2)
+  (assert (and (>= (length (leafset tree1)) 4)
+               (>= (length (leafset tree2)) 4)))
+  (let ((quartets1 (mapcar (lambda (s) (tree-subtree tree1 s))
+                           (choose4 (leafset tree1))))
+        (quartets2 (mapcar (lambda (s) (tree-subtree tree2 s))
+                           (choose4 (leafset tree2)))))
+    (length (set-exclusive-or quartets1 quartets2
+                              :test (lambda (t1 t2)
+                                      (= 0 (tree-distance t1 t2)))))))
+
 (defun tree-make-ultrametric (tree)
   (let ((height (tree-height tree)))
     (make-instance 'tree
