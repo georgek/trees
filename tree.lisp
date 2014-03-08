@@ -1031,7 +1031,7 @@ metric."
 ;;; 1 root which needs to be trimmed
 (defun tree-subtree-untrimmed (tree leafset)
   (if (null (children tree))
-      (car (member tree leafset))
+      tree
       (let ((children (list))
             (edge-weights (list))
             subtree)
