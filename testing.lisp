@@ -129,6 +129,18 @@
                 (setf (aref (vals matrix) i j) (read-from-string distance)))))
     matrix))
 
+(defun matrix-to-cords (matrix)
+  "Returns unique cords for matrix."
+  (assert (eq (type-of matrix) 'matrix))
+  (let ((cords (list)))
+    (loop for i from 0 below (length (names matrix)) do
+         (loop for j from 0 below i do
+              (push (cord (elt (names matrix) i)
+                          (elt (names matrix) j)
+                          (aref (vals matrix) i j))
+                    cords)))
+    cords))
+
 (defun csv-to-cords (filename &key (limit most-positive-fixnum)
                                 (delimiter #\,) (labelled nil)
                                 (truncate-labels nil))
