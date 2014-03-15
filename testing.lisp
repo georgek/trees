@@ -86,6 +86,22 @@
      (setf splits (delete "" splits :test #'equal)))
    (nreverse splits)))
 
+(defclass matrix ()
+  ((names
+    :initarg :names
+    :initform nil
+    :accessor names
+    :documentation "List of names of columns.")
+   (values
+    :initarg :vals
+    :initform nil
+    :accessor vals
+    :documentation "The matrix.")))
+
+(defun make-matrix (names)
+  (make-instance 'matrix :names names
+                 :vals (make-array `(,(length names) ,(length names)))))
+
 (defun csv-to-cords (filename &key (limit most-positive-fixnum)
                                 (delimiter #\,) (labelled nil)
                                 (truncate-labels nil))
