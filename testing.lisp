@@ -56,9 +56,9 @@
                 (push (length (leafset l-tree)) nleaves)
                 (push (length (lassoed-tree-used-cords l-tree)) recovered-cords))
            (format t "~7,2f  ~7,2f  ~7,2f~%"
-                   (/ nmcords ncords)
-                   (/ (mean nleaves) leaves)
-                   (/ (mean recovered-cords) nmcords))))))
+                   i
+                   (* (/ (mean nleaves) leaves) 100)
+                   (* (/ (mean recovered-cords) nmcords) 100))))))
 
 (defun random-tests-pgfplots (nleaves degrees)
   "DEGREES is a list of degrees to run the experiment on."
