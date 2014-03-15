@@ -102,6 +102,33 @@
   (make-instance 'matrix :names names
                  :vals (make-array `(,(length names) ,(length names)))))
 
+(defun csv-to-matrix (filename &key (limit most-positive-fixnum)
+                                 (delimiter #\,) (labelled nil)
+                                 (truncate-labels nil))
+  "Makes a matrix from csv file."
+  (let ((matrix nil)
+        (names nil))
+    (with-open-file (filein filename)
+      (loop for line = (read-line filein nil)
+         for i from 0 below limit
+         with split
+         while line do
+           (setf split (split-string line delimiter))
+           (unless matrix
+             ;; set stuff up with first line
+             (if labelled
+                 (setf names (subseq split 0 (min limit (length split))))
+                 (setf names (range 1 (min limit (length split)))))
+             (when truncate-labels
+               (setf names (mapcar (lambda (s) (subseq s 0 (min (length s) truncate-labels)))
+                                   names)))
+             (setf matrix (make-matrix names))
+             (setf split (split-string (read-line filein) delimiter)))
+           (loop for distance in split
+              for j from 0 below limit do
+                (setf (aref (vals matrix) i j) (read-from-string distance)))))
+    matrix))
+
 (defun csv-to-cords (filename &key (limit most-positive-fixnum)
                                 (delimiter #\,) (labelled nil)
                                 (truncate-labels nil))
