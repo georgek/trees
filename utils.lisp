@@ -46,3 +46,6 @@
          (decf n))
     (nreverse result)))
 
+(defun positions (items sequence &key (test #'eql))
+  (mapcar (lambda (item) (position item sequence :test test)) items))
+
