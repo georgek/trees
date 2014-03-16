@@ -6,6 +6,7 @@
   :serial t
   :components ((:file "packages")
                (:file "utils")
+               (:file "matrix")
                (:file "testing")
                (:file "tree")
                (:file "build")
