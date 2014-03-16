@@ -86,61 +86,6 @@
      (setf splits (delete "" splits :test #'equal)))
    (nreverse splits)))
 
-(defclass matrix ()
-  ((names
-    :initarg :names
-    :initform nil
-    :accessor names
-    :documentation "List of names of columns.")
-   (values
-    :initarg :vals
-    :initform nil
-    :accessor vals
-    :documentation "The matrix.")))
-
-(defun make-matrix (names)
-  (make-instance 'matrix :names names
-                 :vals (make-array `(,(length names) ,(length names)))))
-
-(defun csv-to-matrix (filename &key (limit most-positive-fixnum)
-                                 (delimiter #\,) (labelled nil)
-                                 (truncate-labels nil))
-  "Makes a matrix from csv file."
-  (let ((matrix nil)
-        (names nil))
-    (with-open-file (filein filename)
-      (loop for line = (read-line filein nil)
-         for i from 0 below limit
-         with split
-         while line do
-           (setf split (split-string line delimiter))
-           (unless matrix
-             ;; set stuff up with first line
-             (if labelled
-                 (setf names (subseq split 0 (min limit (length split))))
-                 (setf names (range 1 (min limit (length split)))))
-             (when truncate-labels
-               (setf names (mapcar (lambda (s) (subseq s 0 (min (length s) truncate-labels)))
-                                   names)))
-             (setf matrix (make-matrix names))
-             (setf split (split-string (read-line filein) delimiter)))
-           (loop for distance in split
-              for j from 0 below limit do
-                (setf (aref (vals matrix) i j) (read-from-string distance)))))
-    matrix))
-
-(defun matrix-to-cords (matrix)
-  "Returns unique cords for matrix."
-  (assert (eq (type-of matrix) 'matrix))
-  (let ((cords (list)))
-    (loop for i from 0 below (length (names matrix)) do
-         (loop for j from 0 below i do
-              (push (cord (elt (names matrix) i)
-                          (elt (names matrix) j)
-                          (aref (vals matrix) i j))
-                    cords)))
-    cords))
-
 (defun csv-to-cords (filename &key (limit most-positive-fixnum)
                                 (delimiter #\,) (labelled nil)
                                 (truncate-labels nil))
