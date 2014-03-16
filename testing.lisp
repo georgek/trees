@@ -279,3 +279,26 @@
   (format t "min:  ~7,2f~%max:  ~7,2f~%mean: ~7,2f~%"
           (first values) (second values) (third values)))
 
+;;; combines two sets of cords across the same pairs of vertices into one set
+;;; by taking the mean of the distance for each pair of cords, pairs of cords
+;;; where the ratio between the distances is too high are removed
+(defun combine-cords (cords1 cords2)
+  (let* ((factors (mapcar #'/
+                          (mapcar #'cord-length cords1)
+                          (mapcar #'cord-length cords2)))
+         (hq (high-quartile factors))
+         (lq (low-quartile factors))
+         (iqr (- hq lq))
+         (comb-cords (list)))
+    (loop
+       for cord1 in cords1
+       for cord2 in cords2
+       for factor in factors do
+         (assert (cords-equal cord1 cord2))
+         (unless (or (> factor (+ hq iqr))
+                     (< factor (- lq iqr)))
+           (push (cord (cord-left cord1) (cord-right cord1)
+                       (/ (+ (cord-length cord1) (cord-length cord2)) 2))
+                 comb-cords)))
+    comb-cords))
+
