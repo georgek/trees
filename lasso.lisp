@@ -29,7 +29,7 @@
 (defmacro cords (&rest cords)
   `',(mapcar (lambda (c) (cord (car c) (cadr c) (caddr c))) cords))
 
-(defun cords-equal (cord1 cord2 &optional (test #'equal))
+(defun cords-equal (cord1 cord2 &optional (test #'eq))
   (or (and (funcall test (cord-left cord1) (cord-left cord2))
            (funcall test (cord-right cord1) (cord-right cord2)))
       (and (funcall test (cord-left cord1) (cord-right cord2))
@@ -44,19 +44,19 @@
   (or (eq (cord-left cord) vertex)
       (eq (cord-right cord) vertex)))
 
-(defun cord-intersection (cord1 cord2 &optional (test #'equal))
+(defun cord-intersection (cord1 cord2 &optional (test #'eq))
   (intersection
    (list (caar cord1) (cdar cord1))
    (list (caar cord2) (cdar cord2))
    :test test))
 
-(defun cord-exclusive-or (cord1 cord2 &optional (test #'equal))
+(defun cord-exclusive-or (cord1 cord2 &optional (test #'eq))
   (set-exclusive-or
    (list (caar cord1) (cdar cord1))
    (list (caar cord2) (cdar cord2))
    :test test))
 
-(defun cord-difference (cord1 cord2 &optional (test #'equal))
+(defun cord-difference (cord1 cord2 &optional (test #'eq))
   (set-difference
    (list (caar cord1) (cdar cord1))
    (list (caar cord2) (cdar cord2))
