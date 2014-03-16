@@ -121,8 +121,8 @@ value in the index."
            (t   (vector-push-extend c current-string))))
     (car (children (car current-tree)))))
 
-(defun tree-print (tree &optional (stream t))
-  (print-tree-phylip tree stream)
+(defun tree-print (tree stream &optional (leafmap #'identity))
+  (print-tree-phylip tree stream leafmap)
   (format stream ";"))
 
 (defgeneric print-tree-phylip (tree stream &optional leafmap)
