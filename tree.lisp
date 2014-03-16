@@ -125,25 +125,26 @@ value in the index."
   (print-tree-phylip tree stream)
   (format stream ";"))
 
-(defgeneric print-tree-phylip (tree stream)
-  (:documentation "Prints tree in Newick format."))
+(defgeneric print-tree-phylip (tree stream &optional leafmap)
+  (:documentation "Prints tree in Newick format.  If LEAFMAP is given it
+  should be a function that will be called to map the leaves."))
 
-(defmethod print-tree-phylip ((tree tree) stream)
+(defmethod print-tree-phylip ((tree tree) stream &optional (leafmap #'identity))
   (when (consp (children tree))
     (format stream "(")
     (loop for cc on (children tree)
        for ec on (edge-weights tree)
        do
-         (print-tree-phylip (car cc) stream)
+         (print-tree-phylip (car cc) stream leafmap)
          (format stream ":~f" (car ec))
          (unless (endp (cdr cc))
            (format stream ",")))
     (format stream ")"))
   (when (label tree)
-    (format stream "~a" (label tree))))
+    (format stream "~a" (funcall leafmap (label tree)))))
 
-(defmethod print-tree-phylip (tree stream)
-  (format stream "~A" tree))
+(defmethod print-tree-phylip (tree stream &optional (leafmap #'identity))
+  (format stream "~A" (funcall leafmap tree)))
 
 (defmethod print-object ((object tree) stream)
   (print-unreadable-object (object stream :type t)
