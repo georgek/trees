@@ -19,9 +19,7 @@
 (defun mess-up-cords (cords rem &optional (vary 0))
   "Messes up cords by removing REM from the implied matrix and varying lengths
   by proportion VARY"
-  (let* ((nleaves (length (remove-duplicates
-                           (append (mapcar #'cord-left cords)
-                                   (mapcar #'cord-right cords)))))
+  (let* ((nleaves (length (cords-vertices cords)))
          (whole-matrix (append cords cords
                                (make-list nleaves :initial-element :identity)))
          (n (length whole-matrix))
@@ -35,6 +33,12 @@
   (loop for mcords = (mess-up-cords cords rem vary) do
        (when (= (length (components mcords)) 1)
          (return mcords))))
+
+(defun many-messed-up-cords (n cords rem &optional (vary 0))
+  (let ((cord-sets (list)))
+    (loop repeat n do
+         (push (mess-up-conn cords rem vary) cord-sets))
+    cord-sets))
 
 (defparameter n-tests 500)
 
