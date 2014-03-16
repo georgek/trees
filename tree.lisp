@@ -175,7 +175,7 @@ WIDTH wide when pretty printing horizontally."
           (setf actual-width
                 (loop repeat (pp-tree-h-height tree)
                    maximize (length (funcall printer nil)))))
-        (floor (/ (- (* 2 width) actual-width) original-width)))))
+        (/ (- (* 2 width) actual-width) original-width))))
 
 (defun pp-tree-print (tree &key (stream t) (vertical nil) (width 80))
   (if vertical
