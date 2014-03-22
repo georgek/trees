@@ -498,6 +498,99 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
   (format output "\\node[label={[font=\\small]right:~A}] (~A) at (~F,~F) {};~%"
           (texify-string (format nil "~A" tree)) label x y))
 
+(defparameter tikz-tree-print-polar-root-width 0.1
+  "The root tip length where 1 is the radius of the tree.")
+
+(defparameter tikz-tree-print-polar-root-angle 45
+  "The angle of the root tip.")
+
+(defparameter tikz-tree-print-polar-label-dist 0.01
+  "The distance between leaves and their labels where 1 is the radius of the tree.")
+
+(defparameter tikz-tree-print-polar-bbox-expand
+  "\\useasboundingbox
+   let \\p0 = (current bounding box.south west), \\p1 = (current bounding box.north east)
+      in
+      ({min(-\\x1,\\x0)},{min(-\\y1,\\y0)}) rectangle ({max(-\\x0,\\x1)},{max(-\\y0,\\y1});"
+  "Expands the bounding box of the TikZ picture so that point (0,0) is centred.")
+
+(defgeneric tikz-tree-print-polar (tree &optional output leafmap dist deg segment label labdist)
+  (:documentation "Outputs TikZ for drawing a circle tree."))
+
+(defmethod tikz-tree-print-polar ((tree tree) &optional (output t) (leafmap #'identity)
+                                                (dist 0) (deg 0) (segment 360) (label "r")
+                                                (labdist nil))
+  (setf deg (mod deg 360))
+  (unless labdist
+    (setf labdist (* tikz-tree-print-polar-label-dist (tree-height tree))))
+  (if (consp (children tree))
+      ;; draw root tip
+      (progn
+        (when (= dist 0)
+          (format output "\\node (rr) at (0:0) {};~%")
+          (setf dist (* tikz-tree-print-polar-root-width (tree-height tree)))
+          (setf deg tikz-tree-print-polar-root-angle)
+          (format output "\\draw (rr) -- (~F:~F);~%" deg dist))
+        ;; this tree's root
+        (format output "\\node (~A) at (~F:~F) {};~%" label deg dist)
+        (let ((leaf-seg (/ segment (length (leafset tree)))))
+          (loop
+             for child in (children tree)
+             for i from 1
+             for child-label = (format nil "~A~D" label i)
+             for child-height in (edge-weights tree)
+             for child-seg = (* leaf-seg (length (leafset child)))
+             with child-deg = (- deg (/ segment 2))
+             do
+               (incf child-deg (/ child-seg 2))
+             ;; print each child
+               (tikz-tree-print-polar child
+                                      output
+                                      leafmap
+                                      (+ dist child-height)
+                                      child-deg
+                                      child-seg
+                                      child-label
+                                      labdist)
+             ;; draw helper node
+               (format output "\\node (~Ah) at (~F:~F) {};~%" child-label child-deg dist)
+             ;; join root to child's root
+               (format output "\\draw (~Ah.center) -- (~A.center);~%" child-label child-label)
+               (incf child-deg (/ child-seg 2)))
+          ;; draw arc at once
+          (format output "\\draw (~F:~F) arc (~F:~F:~F);~%"
+                  (+ (- deg (/ segment 2)) (/ (* leaf-seg (length (leafset (nth-child 0 tree)))) 2))
+                  dist
+                  (+ (- deg (/ segment 2)) (/ (* leaf-seg (length (leafset (nth-child 0 tree)))) 2))
+                  (- (+ deg (/ segment 2)) (/ (* leaf-seg (length (leafset (last-child tree)))) 2))
+                  dist)))
+      ;; tree is leaf
+      (tikz-tree-print-polar (label tree) output dist deg segment label))
+  (when (= segment 360)
+    (format output "~A~%" tikz-tree-print-polar-bbox-expand)))
+
+(defmethod tikz-tree-print-polar (tree &optional (output t) (leafmap #'identity)
+                                         (dist 0) (deg 0) (segment 360) (label "r")
+                                         (labdist nil))
+  (declare (ignore segment))
+  (setf deg (mod deg 360))
+  (unless labdist
+    (setf labdist 0.1))
+  ;; (format output "\\node[label={[rotate=~F]~A:~A}] (~A) at (~F:~F) {};~%"
+  ;;         (- (mod (+ deg 90) 180) 90)
+  ;;         (if (> (mod (+ deg 90) 360) 180) "left" "right")
+  ;;         (texify-string (format nil "~A" (funcall leafmap tree)))
+  ;;         label deg dist)
+  (format output "\\node (~A) at (~F:~F) {};~%"
+          label deg dist)
+  (format output "\\node[anchor=~A,rotate=~F] (~Al) at (~F:~F) {~A};~%"
+          (if (> (mod (+ deg 90) 360) 180) "east" "west")
+          (- (mod (+ deg 90) 180) 90)
+          label
+          deg
+          (+ dist labdist)
+          (funcall leafmap tree)))
+
 (defgeneric leafset (tree))
 
 (defmethod leafset ((tree tree))
