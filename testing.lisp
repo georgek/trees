@@ -29,16 +29,30 @@
      (remove-duplicates (remove :identity rem-matrix :test #'eq) :test #'eq)
      vary)))
 
+(defun mess-up-cords2 (cords rem &optional (vary 0))
+  "Messes up cords by removing the proportion REM and varying lengths by
+  proportion VARY"
+  (let* ((n (length cords))
+         (nrem (round (* n rem))))
+    (add-noise-to-cords (select-random cords (- n nrem)) vary)))
+
 (defun mess-up-conn (cords rem &optional (vary 0))
   (loop for mcords = (mess-up-cords cords rem vary) do
        (when (= (length (components mcords)) 1)
          (return mcords))))
 
+(defun mess-up-conn2 (cords rem &optional (vary 0))
+  (loop for mcords = (mess-up-cords2 cords rem vary) do
+       (when (= (length (components mcords)) 1)
+         (return mcords))))
+
 (defun many-messed-up-cords (n cords rem &optional (vary 0))
-  (let ((cord-sets (list)))
-    (loop repeat n do
-         (push (mess-up-conn cords rem vary) cord-sets))
-    cord-sets))
+  (loop repeat n collecting
+       (mess-up-conn cords rem vary)))
+
+(defun many-messed-up-cords2 (n cords rem &optional (vary 0))
+  (loop repeat n collecting
+       (mess-up-conn2 cords rem vary)))
 
 (defparameter n-tests 500)
 
