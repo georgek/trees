@@ -450,44 +450,52 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
 (defparameter tikz-tree-print-root-width 0.02
   "The width of the root where 1 is the width of the entire tree.")
 
-(defgeneric tikz-tree-print (tree &optional x y label output)
+(defgeneric tikz-tree-print (tree &optional output labelfun x y label)
   (:documentation "Prints TikZ output for drawing a tree with (La)TeX. The
   optional parameters should be left as default."))
 
 (defmethod tikz-tree-print ((tree tree)
-                            &optional (x 0) (y 0) (label "r") (output t))
+                            &optional (output t) (labelfun #'identity)
+                              (x 0) (y 0) (label "r"))
   (if (consp (children tree))
       (progn
         ;; this tree's root
-        (format output "\\node (~A) at (~F,~F) {};~%" label x y)
+        (if (label tree)
+            (format output "\\node[label={[label distance=-.2cm,font=\\footnotesize]below left:~A}] (~A) at (~F,~F) {};~%"
+                    (funcall labelfun (label tree)) label x y)
+            (format output "\\node (~A) at (~F,~F) {};~%"
+                    label x y))
         (when (= x 0)
           (format output "\\node (rr) at (~F,~F) {};~%"
                   (- (* (tree-height tree) tikz-tree-print-root-width))
                   y)
           (format output "\\draw (~A.center) -- (rr.center);~%" label))
-        (loop with y = (- y (/ (1- (length (leafset tree))) 2))
+        (loop with y = (+ y (/ (1- (length (leafset tree))) 2))
            for child in (children tree)
            for i from 1
            for child-label = (format nil "~A~D" label i)
            for child-height in (edge-weights tree)
            for child-width = (1- (length (leafset child)))
            do
-             ;; print each child
+           ;; print each child
              (tikz-tree-print child
+                              output
+                              labelfun
                               (+ x child-height)
-                              (+ y (/ child-width 2))
-                              child-label
-                              output)
-             ;; join root to child's root
+                              (- y (/ child-width 2))
+                              child-label)
+           ;; join root to child's root
              (format output "\\draw (~A.center) |- (~A.center);~%"
                      label child-label)
-             (incf y (1+ child-width))))
+             (decf y (1+ child-width))))
       ;; tree is a leaf, print label
-      (format output "\\node[label=right:{~A}] (~A) at (~F,~F) {};~%"
+      (format output "\\node[label={[font=\\small]right:~A}] (~A) at (~F,~F) {};~%"
               (texify-string (format nil "~A" (label tree))) label x y)))
 
-(defmethod tikz-tree-print (tree &optional (x 0) (y 0) (label "r") (output t))
-  (format output "\\node[label=right:{$~A$}] (~A) at (~F,~F) {};~%"
+(defmethod tikz-tree-print (tree &optional (output t) (labelfun #'identity)
+                                   (x 0) (y 0) (label "r"))
+  (declare (ignore labelfun))
+  (format output "\\node[label={[font=\\small]right:~A}] (~A) at (~F,~F) {};~%"
           (texify-string (format nil "~A" tree)) label x y))
 
 (defgeneric leafset (tree))
