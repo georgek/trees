@@ -1057,3 +1057,13 @@ metric."
                (setf (car childc) (nth-child 0 (car childc)))))
         subtree)))
 
+(defun tree-branch-lengths-to-labels (tree &optional label)
+  "Converts branch lengths into labels.  This is for using the output trees of
+  the CONSENSE program."
+  (if (> (length (children tree)) 0)
+      (let ((children (mapcar
+                       (lambda (tree label) (tree-branch-lengths-to-labels tree label))
+                       (children tree)
+                       (edge-weights tree))))
+        (make-instance 'tree :label label :children children))
+      tree))
