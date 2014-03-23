@@ -263,9 +263,23 @@
                   (setf cords (remove-duplicates cords :test #'cords-equal))))))
     tree))
 
-(defun shuffle (list)
+(defun shuffle-bad (list)
   "Incorrect shuffle, but good enough."
-  (sort list #'> :key (lambda (x) (random 1.0))))
+  (sort list #'> :key (lambda (x) (declare (ignore x)) (random 1.0))))
+
+(defun shuffle (list)
+  "Shuffles a list using Fisher-Yates shuffle."
+  (let* ((n (length list))
+         (items (make-array n)))
+    (setf (aref items 0) (car list))
+    (loop for i from 1 below n
+       for listi in (cdr list)
+       for j = (random (1+ i))
+       do
+         (when (/= j i)
+           (setf (aref items i) (aref items j)))
+         (setf (aref items j) listi))
+    (map 'list #'identity items)))
 
 (defparameter maxi-clique-iterations 10
   "Number of times to find a random maximal clique.")
