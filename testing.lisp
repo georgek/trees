@@ -168,9 +168,9 @@
 
 ;;; this test measures the robinson-foulds between trees built from partial
 ;;; distances and the tree built from the complete distance
-(defun partial-rob-foulds (cords)
-  (let* ((comp-tree (ultrametric-lasso3 cords))
-         (max-rf (* 2 (1- (length (leafset comp-tree))))))
+(defun partial-rob-foulds (tree)
+  (let* ((cords (tree-distances tree))
+         (max-rf (* 2 (1- (length (leafset tree))))))
     (format t "missing  mean      min      max     minc     maxc~%")
     (loop for rem in (list 0 1 5 10 20 30)
        for dists = (list)
@@ -179,10 +179,31 @@
          (loop repeat n-tests
             for ntree = (ultrametric-lasso3 (mess-up-conn cords (/ rem 100)))
             do
-              (push (tree-distance comp-tree ntree) dists)
+              (push (tree-distance tree ntree) dists)
               (push (length (leafset ntree)) ncords))
          (format t "~f  ~7,3f  ~7,3f  ~7,3f  ~7d  ~7d~%"
                  rem
+                 (/ (mean dists) max-rf)
+                 (/ (reduce #'min dists) max-rf)
+                 (/ (reduce #'max dists) max-rf)
+                 (reduce #'min ncords)
+                 (reduce #'max ncords)))))
+
+(defun noisy-rob-foulds (tree)
+  (let* ((cords (tree-distances tree))
+         (max-rf (* 2 (1- (length (leafset tree))))))
+    (format t "noise   mean      min      max     minc     maxc~%")
+    (loop for noise in (list 0 1 5 10 20 30)
+       for dists = (list)
+       for ncords = (list)
+       do
+         (loop repeat n-tests
+            for ntree = (ultrametric-lasso3 (mess-up-conn cords 0 (float (/ noise 100))))
+            do
+              (push (tree-distance tree ntree) dists)
+              (push (length (leafset ntree)) ncords))
+         (format t "~f  ~7,3f  ~7,3f  ~7,3f  ~7d  ~7d~%"
+                 noise
                  (/ (mean dists) max-rf)
                  (/ (reduce #'min dists) max-rf)
                  (/ (reduce #'max dists) max-rf)
