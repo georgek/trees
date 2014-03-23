@@ -450,6 +450,9 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
 (defparameter tikz-tree-print-root-width 0.02
   "The width of the root where 1 is the width of the entire tree.")
 
+(defparameter tikz-tree-print-scale-width 0.1
+  "The width of the scale bar where 1 is the width of the entire tree.")
+
 (defgeneric tikz-tree-print (tree &optional output labelfun x y label)
   (:documentation "Prints TikZ output for drawing a tree with (La)TeX. The
   optional parameters should be left as default."))
@@ -489,8 +492,17 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
                      label child-label)
              (decf y (1+ child-width))))
       ;; tree is a leaf, print label
-      (format output "\\node[label={[font=\\small]right:~A}] (~A) at (~F,~F) {};~%"
-              (texify-string (format nil "~A" (label tree))) label x y)))
+      (tikz-tree-print (label tree) output labelfun x y))
+  (when (= y 0)
+    ;; print scale bar
+    (let ((x (tree-height tree))
+          (y (- (1+ (/ (length (leafset tree)) 2)))))
+      (format output "\\draw[|-|] (~F,~F) -- (~F,~F);~%"
+              x y
+              (* (- 1 tikz-tree-print-scale-width) x) y)
+      (format output "\\node at (~F,~F) {~,3F};~%"
+              (* (- 1 (/ tikz-tree-print-scale-width 2)) x) (1- y)
+              (* tikz-tree-print-scale-width x)))))
 
 (defmethod tikz-tree-print (tree &optional (output t) (labelfun #'identity)
                                    (x 0) (y 0) (label "r"))
