@@ -519,6 +519,9 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
 (defparameter tikz-tree-print-polar-label-dist 0.01
   "The distance between leaves and their labels where 1 is the radius of the tree.")
 
+(defparameter tikz-tree-print-polar-scale-width 0.1
+  "The width of the scale bar where 1 is the radius of the entire tree.")
+
 (defparameter tikz-tree-print-polar-bbox-expand
   "\\useasboundingbox
    let \\p0 = (current bounding box.south west), \\p1 = (current bounding box.north east)
@@ -579,6 +582,18 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
       ;; tree is leaf
       (tikz-tree-print-polar (label tree) output dist deg segment label))
   (when (= segment 360)
+    ;; print the scale bar
+    (let* ((x1 (/ (* tikz-tree-print-polar-scale-width (tree-height tree)) 2))
+           (x2 (- x1))
+           (y (- (+ (* (tree-height tree) 1.1)
+                    (* tikz-tree-print-polar-root-width (tree-height tree))))))
+      (format output "\\draw[|-|] (~F,~F) -- (~F,~F);~%"
+              x1 y
+              x2 y)
+      (format output "\\node at (~F,~F) {~,3F};~%"
+              0 (- y (* (tree-height tree) 0.05))
+              (* tikz-tree-print-polar-scale-width (tree-height tree))))
+    ;; expand bounding box so that (0:0) is at centre of image
     (format output "~A~%" tikz-tree-print-polar-bbox-expand)))
 
 (defmethod tikz-tree-print-polar (tree &optional (output t) (leafmap #'identity)
