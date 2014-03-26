@@ -529,10 +529,15 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
       ({min(-\\x1,\\x0)},{min(-\\y1,\\y0)}) rectangle ({max(-\\x0,\\x1)},{max(-\\y0,\\y1});"
   "Expands the bounding box of the TikZ picture so that point (0,0) is centred.")
 
-(defgeneric tikz-tree-print-polar (tree &optional output leafmap dist deg segment label labdist)
+(defun tikz-tree-print-polar-default-colourmap (leaf)
+  "black")
+
+(defgeneric tikz-tree-print-polar (tree &optional output leafmap colourmap
+                                          dist deg segment label labdist)
   (:documentation "Outputs TikZ for drawing a circle tree."))
 
 (defmethod tikz-tree-print-polar ((tree tree) &optional (output t) (leafmap #'identity)
+                                                (colourmap #'tikz-tree-print-polar-default-colourmap)
                                                 (dist 0) (deg 0) (segment 360) (label "r")
                                                 (labdist nil))
   (setf deg (mod deg 360))
@@ -548,7 +553,12 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
           (format output "\\draw (rr) -- (~F:~F);~%" deg dist))
         ;; this tree's root
         (format output "\\node (~A) at (~F:~F) {};~%" label deg dist)
-        (let ((leaf-seg (/ segment (length (leafset tree)))))
+        (let ((leaf-seg (/ segment (length (leafset tree))))
+              (leaf-colours (remove-duplicates (mapcar colourmap (leafset tree))
+                                               :test #'equal))
+              (cluster-colour "black"))
+          (when (= (length leaf-colours) 1)
+            (setf cluster-colour (car leaf-colours)))
           (loop
              for child in (children tree)
              for i from 1
@@ -562,6 +572,7 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
                (tikz-tree-print-polar child
                                       output
                                       leafmap
+                                      colourmap
                                       (+ dist child-height)
                                       child-deg
                                       child-seg
@@ -570,10 +581,12 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
              ;; draw helper node
                (format output "\\node (~Ah) at (~F:~F) {};~%" child-label child-deg dist)
              ;; join root to child's root
-               (format output "\\draw (~Ah.center) -- (~A.center);~%" child-label child-label)
+               (format output "\\draw[color=~A] (~Ah.center) -- (~A.center);~%"
+                       cluster-colour child-label child-label)
                (incf child-deg (/ child-seg 2)))
           ;; draw arc at once
-          (format output "\\draw (~F:~F) arc (~F:~F:~F);~%"
+          (format output "\\draw[color=~A] (~F:~F) arc (~F:~F:~F);~%"
+                  cluster-colour
                   (+ (- deg (/ segment 2)) (/ (* leaf-seg (length (leafset (nth-child 0 tree)))) 2))
                   dist
                   (+ (- deg (/ segment 2)) (/ (* leaf-seg (length (leafset (nth-child 0 tree)))) 2))
@@ -597,6 +610,7 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
     (format output "~A~%" tikz-tree-print-polar-bbox-expand)))
 
 (defmethod tikz-tree-print-polar (tree &optional (output t) (leafmap #'identity)
+                                         (colourmap #'tikz-tree-print-polar-default-colourmap)
                                          (dist 0) (deg 0) (segment 360) (label "r")
                                          (labdist nil))
   (declare (ignore segment))
@@ -610,13 +624,25 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
   ;;         label deg dist)
   (format output "\\node (~A) at (~F:~F) {};~%"
           label deg dist)
-  (format output "\\node[anchor=~A,rotate=~F] (~Al) at (~F:~F) {~A};~%"
+  (format output "\\node[anchor=~A,rotate=~F,color=~A] (~Al) at (~F:~F) {~A};~%"
           (if (> (mod (+ deg 90) 360) 180) "east" "west")
           (- (mod (+ deg 90) 180) 90)
+          (funcall colourmap tree)
           label
           deg
           (+ dist labdist)
           (funcall leafmap tree)))
+
+(defun make-colourmap-leaf-letters (letters colours)
+  "Makes a colourmap between list of letters and list of colours.  The initial
+letter of the name is used to define the colour."
+  (assert (= (length letters) (length colours)))
+  (let ((alist (mapcar #'cons letters colours)))
+   (lambda (name)
+     (let ((colour (assoc (elt name 0) alist)))
+      (if colour
+          (cdr colour)
+          (list 0 0 0))))))
 
 (defgeneric leafset (tree))
 
