@@ -96,7 +96,8 @@
 
 (defun csv-to-matrix (filename &key (limit most-positive-fixnum)
                                  (delimiter #\,) (labelled nil)
-                                 (truncate-labels nil))
+                                 (truncate-labels nil)
+                                 (multiplier 1))
   "Makes a matrix from csv file."
   (let ((matrix nil)
         (names nil))
@@ -118,7 +119,9 @@
              (setf split (split-string (read-line filein) delimiter)))
            (loop for distance in split
               for j from 0 below limit do
-                (setf (aref (vals matrix) i j) (read-from-string distance)))))
+                (setf (aref (vals matrix) i j)
+                      (* (read-from-string distance)
+                         multiplier)))))
     matrix))
 
 (defun matrix-to-cords (matrix)
