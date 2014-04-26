@@ -78,6 +78,7 @@
     sub-matrix))
 
 (defun matrix-factor (matrix1 matrix2)
+  "Divides elements of each matrix with each other."
   (let ((factors (make-matrix (names matrix1))))
     (loop for i from 0 below (array-dimension (vals matrix1) 0) do
          (loop for j from 0 below (array-dimension (vals matrix2) 1) do
