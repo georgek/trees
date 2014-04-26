@@ -24,6 +24,12 @@
         (position i (names matrix) :test test)
         (position j (names matrix) :test test)))
 
+(defun (setf matrix-elt) (val matrix i j &key (test #'eql))
+  (setf (aref (vals matrix)
+              (position i (names matrix) :test test)
+              (position j (names matrix) :test test))
+        val))
+
 (defun print-matrix (matrix stream &key (delimiter #\,))
   (loop for cname on (names matrix) do
        (format stream "~A" (car cname))
