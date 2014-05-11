@@ -85,25 +85,6 @@
        (random-test degree nleaves)
        (format t "   };~%   \\addlegendentry{~d}~%" degree)))
 
-(defun file-string (filename)
-  (with-open-file (filein filename)
-    (reduce (lambda (s1 s2) (concatenate 'string s1 s2))
-            (loop for line = (read-line filein nil)
-               while line collect line))))
-
-(defun split-string (string delimiter &key (omit-nulls t))
-  (assert (stringp string))
-  (assert (characterp delimiter))
-  (let ((splits (list)))
-   (loop for pos = (position delimiter string)
-      while pos do
-        (push (subseq string 0 pos) splits)
-        (setf string (subseq string (1+ pos)))
-      finally (push string splits))
-   (when omit-nulls
-     (setf splits (delete "" splits :test #'equal)))
-   (nreverse splits)))
-
 (defun csv-to-cords (filename &key (limit most-positive-fixnum)
                                 (delimiter #\,) (labelled nil)
                                 (truncate-labels nil))
@@ -278,11 +259,173 @@
        for cord1 in cords1
        for cord2 in cords2
        for factor in factors do
-         (assert (cords-equal cord1 cord2))
+         (assert (cords-equal cord1 cord2 #'equal))
          (unless (or (> factor (+ hq iqr))
                      (< factor (- lq iqr)))
            (push (cord (cord-left cord1) (cord-right cord1)
                        (/ (+ (cord-length cord1) (cord-length cord2)) 2))
                  comb-cords)))
     comb-cords))
+
+(defun csv-to-alist (filename)
+  (let ((alist (list)))
+    (with-open-file (filein filename)
+      (loop for line = (read-line filein nil)
+         while line do
+           (push (reduce #'cons (split-string line #\,)) alist)))
+    (nreverse alist)))
+
+(defun argmax (list)
+  (loop for idx from 0
+     for val in list
+     with maxval = 0
+     with maxidx = 0
+     do
+       (when (> val maxval)
+         (setf maxval val)
+         (setf maxidx idx))
+     finally (return maxidx)))
+
+(defun q-matrix-to-groups (filename group-names)
+  (let ((alist (list)))
+    (with-open-file (filein filename)
+      (loop for line = (read-line filein nil)
+         while line
+         for name in group-names
+         for splits = (split-string line #\Space) do
+           (push (cons name (1+ (argmax (mapcar #'read-from-string splits)))) alist)))
+    (nreverse alist)))
+
+(defun mix-colours (amounts colours)
+  (let ((sum (reduce #'+ amounts)))
+    (mapcar (lambda (c) (min (round (/ c sum)) 255))
+            (reduce (lambda (c1 c2) (mapcar #'+ c1 c2))
+                    (mapcar (lambda (a c) (mapcar (lambda (c) (* c a)) c))
+                            amounts colours)))))
+
+(defun q-matrix-to-colour-map (filename group-names colours)
+  (let ((colourmap (list)))
+    (with-open-file (filein filename)
+      (loop for line = (read-line filein nil)
+         while line
+         for name in group-names
+         for amounts = (mapcar #'read-from-string
+                               (split-string line #\Space))
+         do
+           (push (cons name (mix-colours amounts colours)) colourmap)))
+    (nreverse colourmap)))
+
+(defun two-matrix-tree (mat1 mat2 overlap1 overlap2)
+  "Builds tree by combining mat1 and mat2.  overlap1 and overlap2 should be
+  lists of equal length which are subsets of (names mat1) and (names mat2)
+  respectively indicating which elements are identical between the matrices."
+  (assert (= (length overlap1) (length overlap2)))
+  (let* ((cords1 (matrix-to-cords mat1))
+         (cords2 (matrix-to-cords mat2))
+         overlap-cords all-cords)
+    (dbg :2mat "Making cords1...~%")
+    (multiple-value-bind (cords1 overlap-cords1)
+        (b-remove-if (lambda (c) (and (find (cord-left c) overlap1 :test #'equal)
+                                      (find (cord-right c) overlap1 :test #'equal)))
+                     cords1)
+      (dbg :2mat "ol1: ~D~%" (length overlap-cords1))
+      (dbg :2mat "Makign cords2...~%")
+      (multiple-value-bind (cords2 overlap-cords2)
+          (b-remove-if (lambda (c) (and (find (cord-left c) overlap2 :test #'equal)
+                                        (find (cord-right c) overlap2 :test #'equal)))
+                       cords2)
+        (dbg :2mat "ol2: ~D~%" (length overlap-cords2))
+        (dbg :2mat "Making overlap...~%")
+        (setf overlap-cords
+              (combine-cords
+               (mapcar (lambda (c) (cord (format nil "C~D"
+                                                 (1+ (position (cord-left c) overlap1 :test #'equal)))
+                                         (format nil "C~D"
+                                                 (1+ (position (cord-right c) overlap1 :test #'equal)))
+                                         (cord-length c)))
+                       overlap-cords1)
+               (mapcar (lambda (c) (cord (format nil "C~D"
+                                                 (1+ (position (cord-left c) overlap2 :test #'equal)))
+                                         (format nil "C~D"
+                                                 (1+ (position (cord-right c) overlap2 :test #'equal)))
+                                         (cord-length c)))
+                       overlap-cords2)))
+        (dbg :2mat "Making all-cords...~%")
+        (setf all-cords (union (mapcar (lambda (c) (cord (format nil "A~A" (cord-left c))
+                                                         (format nil "A~A" (cord-right c))
+                                                         (cord-length c)))
+                                       cords1)
+                               (mapcar (lambda (c) (cord (format nil "B~A" (cord-left c))
+                                                         (format nil "B~A" (cord-right c))
+                                                         (cord-length c)))
+                                       cords2)
+                               :test #'cords-equal))
+        (setf all-cords (union all-cords overlap-cords :test #'cords-equal))
+        (dbg :2mat "Checking...~%")
+        (assert (= (+ (length cords1) (length cords2) (length overlap-cords))
+                   (length all-cords)))
+        
+          )
+        )
+    )
+  )
+
+(defun label-to-biglabel-function (overlap unique-prefix overlap-names)
+  (lambda (label)
+   (let ((pos (position label overlap :test #'equal)))
+     (if pos
+         (nth pos overlap-names)
+         (format nil "~A~A" unique-prefix label)))))
+
+(defun cord-overlap-p (cord overlap-prefix-char)
+  (declare (type character overlap-prefix-char))
+  (and (char= (aref (cord-left cord) 0) overlap-prefix-char)
+       (char= (aref (cord-right cord) 0) overlap-prefix-char)))
+
+(defun cord< (cord1 cord2)
+  (or (string< (cord-left cord1) (cord-left cord2))
+      (string< (cord-right cord1) (cord-left cord2))))
+
+(defun overlap-labels (n prefix)
+  (mapcar (lambda (i) (format nil "~A~A" prefix i)) (range 1 n)))
+
+(defun two-matrix-tree2 (mat1 mat2 overlap1 overlap2)
+  (assert (= (length overlap1) (length overlap2)))
+  (let ((mat1 (copy-matrix mat1))
+        (mat2 (copy-matrix mat2))
+        (overlap-labels (overlap-labels (length overlap1) "C"))
+        cords1 cords2
+        overlap-cords)
+    (setf (names mat1) (mapcar (label-to-biglabel-function overlap1 "A" overlap-labels)
+                               (names mat1)))
+    (setf (names mat2) (mapcar (label-to-biglabel-function overlap2 "B" overlap-labels)
+                               (names mat2)))
+    (dbg :2mat "Making cords...")
+    (setf cords1 (matrix-to-cords mat1))
+    (setf cords2 (matrix-to-cords mat2))
+    (dbg :2mat "Removing overlap1...")
+    (multiple-value-bind (cords1 overlap-cords1)
+        (b-remove-if (lambda (c) (cord-overlap-p c #\C)) cords1)
+      (dbg :2mat "Removing overlap2...")
+      (multiple-value-bind (cords2 overlap-cords2)
+          (b-remove-if (lambda (c) (cord-overlap-p c #\C)) cords2)
+        (setf overlap-cords1 (sort overlap-cords1 #'cord<))
+        (setf overlap-cords2 (sort overlap-cords2 #'cord<))
+        (dbg :2mat "Combining overlap cords (~D)..." (length overlap-cords1))
+        (setf overlap-cords (combine-cords overlap-cords1 overlap-cords2))
+        (dbg :2mat "Done (~D)." (length overlap-cords))
+        (dbg :2mat "Building tree...")
+        (ultrametric-lasso3 (nconc cords1 cords2 overlap-cords))
+          )
+        )
+    )
+  )
+
+(defun random-submatrix (matrix n kept-names)
+  (assert (>= n (length kept-names)))
+  (let* ((n (- n (length kept-names)))
+         (rest (select-random
+                (set-difference (names matrix) kept-names :test #'equal)
+                n)))
+    (sub-matrix matrix (append kept-names rest) :test #'equal)))
 
