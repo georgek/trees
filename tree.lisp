@@ -530,16 +530,17 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
   "Expands the bounding box of the TikZ picture so that point (0,0) is centred.")
 
 (defun tikz-tree-print-polar-default-colourmap (leaf)
-  "black")
+  (declare (ignore leaf))
+  '(0 0 0))
 
 (defgeneric tikz-tree-print-polar (tree &optional output leafmap colourmap
-                                          dist deg segment label labdist)
+                                          dist deg segment label labdist dist-mult)
   (:documentation "Outputs TikZ for drawing a circle tree."))
 
 (defmethod tikz-tree-print-polar ((tree tree) &optional (output t) (leafmap #'identity)
                                                 (colourmap #'tikz-tree-print-polar-default-colourmap)
                                                 (dist 0) (deg 0) (segment 360) (label "r")
-                                                (labdist nil))
+                                                (labdist nil) (dist-mult 1))
   (setf deg (mod deg 360))
   (unless labdist
     (setf labdist (* tikz-tree-print-polar-label-dist (tree-height tree))))
@@ -549,22 +550,22 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
         (when (= dist 0)
           (format output "\\node (rr) at (0:0) {};~%")
           (setf dist (* tikz-tree-print-polar-root-width (tree-height tree)))
+          (setf dist-mult (/ 1 (tree-height tree)))
           (setf deg tikz-tree-print-polar-root-angle)
-          (format output "\\draw (rr) -- (~F:~F);~%" deg dist))
+          (format output "\\draw[color={~A}] (rr) -- (~F:~F);~%"
+                  (tikz-rgb-colour (cluster-colour (mapcar colourmap (leafset tree))))
+                  deg (* dist dist-mult)))
         ;; this tree's root
-        (format output "\\node (~A) at (~F:~F) {};~%" label deg dist)
+        (format output "\\node (~A) at (~F:~F) {};~%" label deg (* dist dist-mult))
         (let ((leaf-seg (/ segment (length (leafset tree))))
-              (leaf-colours (remove-duplicates (mapcar colourmap (leafset tree))
-                                               :test #'equal))
-              (cluster-colour "black"))
-          (when (= (length leaf-colours) 1)
-            (setf cluster-colour (car leaf-colours)))
+              (leaf-colours (mapcar colourmap (leafset tree))))
           (loop
              for child in (children tree)
              for i from 1
              for child-label = (format nil "~A~D" label i)
              for child-height in (edge-weights tree)
              for child-seg = (* leaf-seg (length (leafset child)))
+             for child-colours = (mapcar colourmap (leafset child))
              with child-deg = (- deg (/ segment 2))
              do
                (incf child-deg (/ child-seg 2))
@@ -577,23 +578,25 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
                                       child-deg
                                       child-seg
                                       child-label
-                                      labdist)
+                                      labdist
+                                      dist-mult)
              ;; draw helper node
-               (format output "\\node (~Ah) at (~F:~F) {};~%" child-label child-deg dist)
+               (format output "\\node (~Ah) at (~F:~F) {};~%" child-label child-deg (* dist dist-mult))
              ;; join root to child's root
-               (format output "\\draw[color=~A] (~Ah.center) -- (~A.center);~%"
-                       cluster-colour child-label child-label)
+               (format output "\\draw[color={~A}] (~Ah.center) -- (~A.center);~%"
+                       (tikz-rgb-colour (cluster-colour child-colours))
+                       child-label child-label)
                (incf child-deg (/ child-seg 2)))
           ;; draw arc at once
-          (format output "\\draw[color=~A] (~F:~F) arc (~F:~F:~F);~%"
-                  cluster-colour
+          (format output "\\draw[color={~A}] (~F:~F) arc (~F:~F:~F);~%"
+                  (tikz-rgb-colour (cluster-colour leaf-colours))
                   (+ (- deg (/ segment 2)) (/ (* leaf-seg (length (leafset (nth-child 0 tree)))) 2))
-                  dist
+                  (* dist dist-mult)
                   (+ (- deg (/ segment 2)) (/ (* leaf-seg (length (leafset (nth-child 0 tree)))) 2))
                   (- (+ deg (/ segment 2)) (/ (* leaf-seg (length (leafset (last-child tree)))) 2))
-                  dist)))
+                  (* dist dist-mult))))
       ;; tree is leaf
-      (tikz-tree-print-polar (label tree) output dist deg segment label))
+      (tikz-tree-print-polar (label tree) output dist deg segment label labdist dist-mult))
   (when (= segment 360)
     ;; print the scale bar
     (let* ((x1 (/ (* tikz-tree-print-polar-scale-width (tree-height tree)) 2))
@@ -612,7 +615,7 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
 (defmethod tikz-tree-print-polar (tree &optional (output t) (leafmap #'identity)
                                          (colourmap #'tikz-tree-print-polar-default-colourmap)
                                          (dist 0) (deg 0) (segment 360) (label "r")
-                                         (labdist nil))
+                                         (labdist nil) (dist-mult 1))
   (declare (ignore segment))
   (setf deg (mod deg 360))
   (unless labdist
@@ -623,14 +626,14 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
   ;;         (texify-string (format nil "~A" (funcall leafmap tree)))
   ;;         label deg dist)
   (format output "\\node (~A) at (~F:~F) {};~%"
-          label deg dist)
-  (format output "\\node[anchor=~A,rotate=~F,color=~A] (~Al) at (~F:~F) {~A};~%"
+          label deg (* dist dist-mult))
+  (format output "\\node[anchor=~A,rotate=~F,color={~A}] (~Al) at (~F:~F) {~A};~%"
           (if (> (mod (+ deg 90) 360) 180) "east" "west")
           (- (mod (+ deg 90) 180) 90)
-          (funcall colourmap tree)
+          (tikz-rgb-colour (funcall colourmap tree))
           label
           deg
-          (+ dist labdist)
+          (+ (* dist dist-mult) labdist)
           (funcall leafmap tree)))
 
 (defun make-colourmap-leaf-letters (letters colours)
@@ -643,6 +646,17 @@ letter of the name is used to define the colour."
       (if colour
           (cdr colour)
           (list 0 0 0))))))
+
+(defun tikz-rgb-colour (rgb)
+  "Converts list of three colour values to a TikZ RGB string."
+  (apply #'format nil "rgb:red,~D;green,~D;blue,~D" rgb))
+
+(defun cluster-colour (colours)
+  "Makes a cluster colours"
+  (let ((l (length colours)))
+   (mapcar (lambda (c) (round (/ c l)))
+           (reduce (lambda (l1 l2) (mapcar #'+ l1 l2))
+                   colours))))
 
 (defgeneric leafset (tree))
 
