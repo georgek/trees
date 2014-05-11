@@ -123,7 +123,7 @@ value in the index."
 
 (defun tree-print (tree stream &optional (leafmap #'identity))
   (print-tree-phylip tree stream leafmap)
-  (format stream ";"))
+  (format stream ";~%"))
 
 (defgeneric print-tree-phylip (tree stream &optional leafmap)
   (:documentation "Prints tree in Newick format.  If LEAFMAP is given it
