@@ -49,3 +49,42 @@
 (defun positions (items sequence &key (test #'eql))
   (mapcar (lambda (item) (position item sequence :test test)) items))
 
+(defun split-string (string delimiter &key (omit-nulls t))
+  (assert (stringp string))
+  (assert (characterp delimiter))
+  (let ((splits (list)))
+   (loop for pos = (position delimiter string)
+      while pos do
+        (push (subseq string 0 pos) splits)
+        (setf string (subseq string (1+ pos)))
+      finally (push string splits))
+   (when omit-nulls
+     (setf splits (delete "" splits :test #'equal)))
+   (nreverse splits)))
+
+(defun file-string (filename)
+  (with-open-file (filein filename)
+    (reduce (lambda (s1 s2) (concatenate 'string s1 s2))
+            (loop for line = (read-line filein nil)
+               while line collect line))))
+
+(defun html-colour (string)
+  (check-type string string)
+  (assert (= (length string) 6))
+  (list (parse-integer string :start 0 :end 2 :radix 16)
+        (parse-integer string :start 2 :end 4 :radix 16)
+        (parse-integer string :start 4 :end 6 :radix 16)))
+
+(defmacro defmap (a b &body values)
+  (let ((mapnames (list (intern (format nil "~A2~A" (symbol-name a) (symbol-name b)))
+                        (intern (format nil "~A2~A" (symbol-name b) (symbol-name a)))))
+        (valsym (gensym "values")))
+    `(let ((,valsym ',values))
+       (progn
+         ,@(loop for mapname in mapnames append
+                `((defvar ,mapname (make-hash-table :test #'equal))
+                  (loop with val = ,valsym
+                     while (consp val) do
+                       (setf (gethash (car val) ,mapname) (cadr val))
+                       (setf val (cddr val)))))))))
+
