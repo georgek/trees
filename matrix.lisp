@@ -18,6 +18,9 @@
                  :vals (make-array `(,(length names) ,(length names))
                                    :initial-element nil)))
 
+(defun copy-matrix (matrix)
+  (make-instance 'matrix :vals (vals matrix) :names (names matrix)))
+
 (defun matrix-elt (matrix i j &key (test #'eql))
   "Get element by name of column and row."
   (aref (vals matrix)
