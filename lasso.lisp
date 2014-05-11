@@ -151,7 +151,7 @@
 
 (defun b-remove-if (test list)
   (let ((removed (remove-if test list)))
-    (values removed (set-difference list removed))))
+    (values removed (set-difference list removed :test #'eq))))
 
 (defun cord-other-end (cord this-end)
   (assert (cord-contains-p cord this-end))
