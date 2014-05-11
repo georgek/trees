@@ -344,6 +344,13 @@
   (dbg :mean "mean diff: ~D~%" (- (reduce #'max list) (reduce #'min list)))
   (/ (reduce #'+ list) (length list)))
 
+(defun max-from-mean (list)
+  (let ((mean (mean list)))
+   (reduce #'max (mapcar (lambda (n) (abs (- n mean))) list))))
+
+(defun cluster-goodness (list)
+  (/ (max-from-mean list) (mean list)))
+
 (defun median (list)
   (let* ((list (sort (copy-list list) #'<))
          (n (length list))
@@ -370,6 +377,23 @@ return just the mode."
                                (< (funcall key x) (- lq (* 0.5 iqr)))))
                list)))
 
+;;; cluster should have goodness below this
+(defparameter cluster-goodness-threshold 0.1)
+
+(defun get-cluster (list &optional (key #'identity))
+  "Returns one cluster which has goodness below threshold."
+  (flet ((dist (x y) (abs (- x y))))
+   (loop for keys = (mapcar key list)
+      for mean = (mean keys)
+      for max = (reduce #'max (mapcar (lambda (k) (dist k mean)) keys))
+      for furthest = (find max keys :key (lambda (k) (dist k mean)) :test #'=)
+      for goodness = (/ max mean)
+      while (> goodness cluster-goodness-threshold)
+      do
+        (dbg :clus "~A~%" furthest)
+        (setf list (remove furthest list :key key))))
+  list)
+
 (defun mode (list)
   (let ((counts (make-hash-table)))
     (dbg :mode "~{~A~%~}~%" list)
@@ -393,8 +417,8 @@ return just the mode."
         (collapsed-cords (make-hash-table :test #'eq))
         (final-cords (list))
         (rest (list)))
-    (dbg :coll-cords "Component: ~A~%Clique: ~A~%" component-vertices
-         clique-vertices)
+    ;; (dbg :coll-cords "Component: ~A~%Clique: ~A~%" component-vertices
+    ;;      clique-vertices)
     (loop for cord in cords do
          (cond
            ((find (cord-left cord) clique-vertices)
@@ -406,8 +430,14 @@ return just the mode."
     (loop for other-end being the hash-keys in collapsed-cords
        for real-cords = (remove-outliers (gethash other-end collapsed-cords)
                                          #'cord-length)
+       ;; for real-cords = (gethash other-end collapsed-cords)
+       ;; for real-cords = (get-cluster (gethash other-end collapsed-cords)
+       ;;                               #'cord-length)
        for length = (mean (mapcar #'cord-length real-cords))
        do
+         ;; (dbg :coll-cords "Diff: ~,4F~%" (- (reduce #'max (mapcar #'cord-length real-cords))
+         ;;                                    (reduce #'min (mapcar #'cord-length real-cords))))
+         ;; (dbg :coll-cords "Length: ~,4F~%" length)
          (if (dbg-on-p :coll-cords)
              (push (mapcar #'cord-length real-cords) *dbg-collapse-cords*))
          (push (make-instance 'collapsed-cord
