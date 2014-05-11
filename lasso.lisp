@@ -384,7 +384,9 @@ return just the mode."
                  max-length (gethash item counts)))
        finally (return max))))
 
-(defun collapse-cords (cords component-vertices collapsed-tree)
+(defvar *dbg-collapse-cords* nil)
+
+(defun collapse-cords (cords collapsed-tree)
   (let ((clique-vertices (if (consp (label collapsed-tree))
                              (label collapsed-tree)
                              (children collapsed-tree)))
@@ -406,6 +408,8 @@ return just the mode."
                                          #'cord-length)
        for length = (mean (mapcar #'cord-length real-cords))
        do
+         (if (dbg-on-p :coll-cords)
+             (push (mapcar #'cord-length real-cords) *dbg-collapse-cords*))
          (push (make-instance 'collapsed-cord
                               :left collapsed-tree :right other-end
                               :length length
@@ -432,8 +436,7 @@ return just the mode."
                 (dbg :lasso3 "Tree used cords: ~A~%" (used-cords tree))
                 (when (dbg-on-p :lasso3)
                   (pp-tree-print tree :vertical t))
-                (setf cords (collapse-cords cords (cords-vertices component)
-                                            tree)))
+                (setf cords (collapse-cords cords tree)))
            ;; choose biggest component (can save others here)
            (setf cords (reduce (lambda (c1 c2) (if (> (clique-leaves c1)
                                                       (clique-leaves c2))
