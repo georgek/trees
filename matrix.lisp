@@ -54,18 +54,22 @@
 (defun cords-to-matrix (cords &optional (leafmap #'identity))
   (let* ((names (cords-vertices cords))
          (matrix (make-matrix (mapcar leafmap names))))
+    (setf (names matrix) (sort (names matrix) #'string<))
+    (setf (names matrix) (stable-sort (names matrix) #'< :key #'length))
     ;; fill in identity diagonal
     (loop for i from 0 below (length names) do
          (setf (aref (vals matrix) i i) 0))
     ;; fill in values from cords
     (loop for cord in cords do
-         (setf (aref (vals matrix)
-                     (position (cord-left cord) names :test #'eq)
-                     (position (cord-right cord) names :test #'eq))
+         (setf (matrix-elt matrix
+                           (funcall leafmap (cord-left cord))
+                           (funcall leafmap (cord-right cord))
+                           :test #'equal)
                (cord-length cord))
-         (setf (aref (vals matrix)
-                     (position (cord-right cord) names :test #'eq)
-                     (position (cord-left cord) names :test #'eq))
+         (setf (matrix-elt matrix
+                           (funcall leafmap (cord-right cord))
+                           (funcall leafmap (cord-left cord))
+                           :test #'equal)
                (cord-length cord)))
     matrix))
 
