@@ -366,8 +366,8 @@ return just the mode."
   (let* ((lq (low-quartile (mapcar key list)))
          (hq (high-quartile (mapcar key list)))
          (iqr (- hq lq)))
-    (remove-if (lambda (x) (or (> (funcall key x) (+ hq (* 1.5 iqr)))
-                               (< (funcall key x) (- lq (* 1.5 iqr)))))
+    (remove-if (lambda (x) (or (> (funcall key x) (+ hq (* 0.5 iqr)))
+                               (< (funcall key x) (- lq (* 0.5 iqr)))))
                list)))
 
 (defun mode (list)
