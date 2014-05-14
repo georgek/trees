@@ -37,10 +37,19 @@
                  :vals (copy-seq(vals matrix))
                  :names (copy-list (names matrix))))
 
+;; (defun ref-to-vref (i j)
+;;   (when (> i j)
+;;     (rotatef i j))
+;;   (+ (/ (* j (1- j)) 2) i))
+
 (defun ref-to-vref (i j)
+  (declare (type fixnum i j)
+           (optimize (speed 3) (safety 0)))
   (when (> i j)
     (rotatef i j))
-  (+ (/ (* j (1- j)) 2) i))
+  (the fixnum (+ (ash (the fixnum (* j (the fixnum (- j 1))))
+                    -1)
+                 i)))
 
 ;; (defun matrix-elt (matrix i j &key (test #'eql))
 ;;   "Get element by name of column and row."
