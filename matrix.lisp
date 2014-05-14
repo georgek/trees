@@ -1,4 +1,12 @@
 (in-package :gk-trees)
+;;; since these are distance matrices ie. the main diagonal is all zero and it
+;;; is symmetric about the diagonal, we can store the matrix in a compact form
+;;; inside a one dimensional array. This saves memory, of course, increases
+;;; overhead on element lookups, but saves time on insertion since we don't
+;;; need to do everything twice. Also traversing an entire row/column is done
+;;; as quickly as normal (by recalculating the index into the real array) and
+;;; there is no need to traverse both the row and column if updating the
+;;; matrix.
 
 ;;; for square matrices
 (defclass matrix ()
@@ -13,25 +21,48 @@
     :accessor vals
     :documentation "The matrix.")))
 
+(defmethod print-object ((matrix matrix) stream)
+  (print-unreadable-object (matrix stream :type t)
+    (format stream "size: ~A"
+            (length (names matrix)))))
+
 (defun make-matrix (names)
-  (make-instance 'matrix :names names
-                 :vals (make-array `(,(length names) ,(length names))
-                                   :initial-element nil)))
+  (let ((l (length names)))
+   (make-instance 'matrix :names names
+                  :vals (make-array (list (/ (* l (1- l)) 2))
+                                    :initial-element nil))))
 
 (defun copy-matrix (matrix)
-  (make-instance 'matrix :vals (vals matrix) :names (names matrix)))
+  (make-instance 'matrix
+                 :vals (copy-seq(vals matrix))
+                 :names (copy-list (names matrix))))
 
-(defun matrix-elt (matrix i j &key (test #'eql))
-  "Get element by name of column and row."
-  (aref (vals matrix)
-        (position i (names matrix) :test test)
-        (position j (names matrix) :test test)))
+(defun ref-to-vref (i j)
+  (when (> i j)
+    (rotatef i j))
+  (+ (/ (* j (1- j)) 2) i))
 
-(defun (setf matrix-elt) (val matrix i j &key (test #'eql))
-  (setf (aref (vals matrix)
-              (position i (names matrix) :test test)
-              (position j (names matrix) :test test))
-        val))
+;; (defun matrix-elt (matrix i j &key (test #'eql))
+;;   "Get element by name of column and row."
+;;   (aref (vals matrix)
+;;         (position i (names matrix) :test test)
+;;         (position j (names matrix) :test test)))
+
+(defun matrix-elt (matrix i j)
+  (if (= i j)
+      0
+      (aref (vals matrix) (ref-to-vref i j))))
+
+;; (defun (setf matrix-elt) (val matrix i j &key (test #'eql))
+;;   (setf (aref (vals matrix)
+;;               (position i (names matrix) :test test)
+;;               (position j (names matrix) :test test))
+;;         val))
+
+(defun (setf matrix-elt) (val matrix i j)
+  (when (/= i j)
+    (setf (aref (vals matrix) (ref-to-vref i j))
+          val)))
 
 (defun print-matrix (matrix stream &key (delimiter #\,))
   (loop for cname on (names matrix) do
@@ -39,15 +70,14 @@
        (unless (endp (cdr cname))
          (format stream "~C" delimiter)))
   (fresh-line stream)
-  (let ((ilim (1- (array-dimension (vals matrix) 0)))
-        (jlim (1- (array-dimension (vals matrix) 1))))
-   (loop for i from 0 to ilim do
-        (loop for j from 0 to jlim
-           for val = (aref (vals matrix) i j) do
+  (let ((dim (1- (length (names matrix)))))
+   (loop for i from 0 to dim do
+        (loop for j from 0 to dim
+           for val = (matrix-elt matrix i j) do
              (if val
                  (format stream "~A" val)
                  (format stream "-"))
-             (unless (= j jlim)
+             (unless (= j dim)
                (format stream "~C" delimiter)))
         (fresh-line stream))))
 
@@ -56,9 +86,6 @@
          (matrix (make-matrix (mapcar leafmap names))))
     (setf (names matrix) (sort (names matrix) #'string<))
     (setf (names matrix) (stable-sort (names matrix) #'< :key #'length))
-    ;; fill in identity diagonal
-    (loop for i from 0 below (length names) do
-         (setf (aref (vals matrix) i i) 0))
     ;; fill in values from cords
     (loop for cord in cords do
          (setf (matrix-elt matrix
