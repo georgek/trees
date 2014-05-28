@@ -16,7 +16,17 @@
    (array
     :initarg :initial-contents
     :initform (make-array 20 :fill-pointer 0 :adjustable t)
-    :documentation "An array of objects which should already be heapified.")))
+    :documentation "A sequence of objects.")))
+
+(defmethod initialize-instance :after ((queue queue) &key)
+  (with-slots (array) queue
+    (let ((length (length array))
+          new-array)
+     (when (plusp length)
+       (setf new-array (make-array (* length 2) :fill-pointer 0 :adjustable t))
+       (map-into new-array #'identity array)
+       (setf array new-array)
+       (heapify-array queue)))))
 
 (defmethod print-object ((object queue) stream)
   (with-slots (comparison key array) object
@@ -124,4 +134,10 @@
          (rotatef (aref array index)
                   (aref array (pa index)))
          (setf index (pa index)))))
+
+(defun heapify-array (queue)
+  (with-slots (array) queue
+   (let ((start (floor (/ (- (length array) 2) 2))))
+     (loop for i from start downto 0 do
+          (sift-down queue i)))))
 
