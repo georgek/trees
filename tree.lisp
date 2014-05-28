@@ -44,7 +44,11 @@
     :initarg :edge-weights
     :initform (list)
     :accessor edge-weights
-    :documentation "The edge-weights of the outgoing edges.")))
+    :documentation "The edge-weights of the outgoing edges.")
+   (nleaves
+    :initarg :nleaves
+    :accessor nleaves
+    :documentation "The number of leaves.")))
 
 (defmethod initialize-instance :after ((tree tree) &key)
   ;; ensure that there are enough edge weights
@@ -63,7 +67,9 @@
     (t
      (setf (edge-weights tree) (make-list (length (children tree))
                                           :initial-element
-                                          tree-default-weight)))))
+                                          tree-default-weight))))
+  ;; set nleaves
+  (setf (nleaves tree) (length (leafset tree))))
 
 ;;; methods for other lisp objects
 (defmethod label (tree)
