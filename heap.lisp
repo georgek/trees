@@ -72,9 +72,10 @@
     (let ((removed (aref array index)))
       ;; move last element in array to that position
       (setf (aref array index) (vector-pop array))
-      (if (funcall comparison
-                   (funcall key (aref array index))
-                   (funcall key (aref array (pa index))))
+      (if (and (plusp index)
+               (funcall comparison
+                        (funcall key (aref array index))
+                        (funcall key (aref array (pa index)))))
           (sift-up queue index)
           (sift-down queue index))
       removed)))
