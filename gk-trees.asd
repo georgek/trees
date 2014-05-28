@@ -7,6 +7,7 @@
   :components ((:file "packages")
                (:file "utils")
                (:file "matrix")
+               (:file "heap")
                (:file "testing")
                (:file "tree")
                (:file "build")
