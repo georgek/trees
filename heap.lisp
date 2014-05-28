@@ -74,6 +74,10 @@
   (with-slots (array) queue
     (length array)))
 
+(defun queue-empty-p (queue)
+  (with-slots (array) queue
+    (zerop (length array))))
+
 ;;; indexing functions
 (defun fc (index)
   "Returns index of first child."
