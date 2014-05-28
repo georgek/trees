@@ -57,6 +57,15 @@
            (sift-down queue 0)
            top)))))
 
+(defun dequeue-top-to-list (queue)
+  "Dequeues and returns all elements with priority equal to top of queue."
+  (with-slots (comparison key array) queue
+    (when (plusp (length array))
+      (let ((top-value (funcall key (aref array 0))))
+        (loop until (queue-empty-p queue)
+           while (= top-value (funcall key (aref array 0)))
+           collect (dequeue queue))))))
+
 (defun dequeue-at (queue index)
   "Dequeues and returns object at given index in queue."
   (with-slots (comparison key array) queue
@@ -72,9 +81,8 @@
 
 (defun peek (queue)
   (with-slots (array) queue
-    (if (= (length array) 0)
-        nil
-        (aref array 0))))
+    (when (plusp (length array))
+      (aref array 0))))
 
 (defun empty-queue (queue)
   (with-slots (array) queue
