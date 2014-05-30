@@ -499,7 +499,7 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
              (decf y (1+ child-width))))
       ;; tree is a leaf, print label
       (tikz-tree-print (label tree) output labelfun x y))
-  (when (= y 0)
+  (when (= x 0)
     ;; print scale bar
     (let ((x (tree-height tree))
           (y (- (1+ (/ (length (leafset tree)) 2)))))
