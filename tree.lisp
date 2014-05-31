@@ -166,6 +166,9 @@ value in the index."
 ;;; is called.  Then for a whole tree we just generate the printer closures
 ;;; for each child tree and call them in order.
 
+;;; Remember to pass a tree from `canonicalise-tree' to get a canonical
+;;; graphical representation from all pretty printing functions!
+
 ;;; TODO: This seems to work but it would be good to prove that it's correct
 (defun pp-tree-width-multiplier (tree width)
   "Calculates the width multiplier necessary to ensure TREE is no more than
