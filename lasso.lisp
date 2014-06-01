@@ -153,6 +153,11 @@
   (let ((removed (remove-if test list)))
     (values removed (set-difference list removed :test #'eq))))
 
+(defun b-remove-if2 (test vector)
+  (let ((not-removed (remove-if test vector))
+        (removed (remove-if-not test vector)))
+    (values not-removed removed)))
+
 (defun cord-other-end (cord this-end)
   (assert (cord-contains-p cord this-end))
   (if (eq (cord-left cord) this-end)
@@ -449,6 +454,45 @@ return just the mode."
                final-cords))
     (nconc final-cords rest)))
 
+(defun collapse-cords2 (cords collapsed-tree)
+  (let ((clique-vertices (if (consp (label collapsed-tree))
+                             (label collapsed-tree)
+                             (children collapsed-tree)))
+        (collapsed-cords (make-hash-table :test #'eq))
+        (final-cords (list))
+        (rest (list)))
+    ;; (dbg :coll-cords "Component: ~A~%Clique: ~A~%" component-vertices
+    ;;      clique-vertices)
+    (loop for cord across cords do
+         (cond
+           ((find (cord-left cord) clique-vertices)
+            (push cord (gethash (cord-right cord) collapsed-cords)))
+           ((find (cord-right cord) clique-vertices)
+            (push cord (gethash (cord-left cord) collapsed-cords)))
+           (t
+            (push cord rest))))
+    (loop for other-end being the hash-keys in collapsed-cords
+       ;; for real-cords = (remove-outliers (gethash other-end collapsed-cords)
+       ;;                                   #'cord-length)
+       ;; for real-cords = (gethash other-end collapsed-cords)
+       for real-cords = (get-cluster (gethash other-end collapsed-cords)
+                                     #'cord-length)
+       for length = (mean (mapcar #'cord-length real-cords))
+       do
+         ;; (dbg :coll-cords "Diff: ~,4F~%" (- (reduce #'max (mapcar #'cord-length real-cords))
+         ;;                                    (reduce #'min (mapcar #'cord-length real-cords))))
+         ;; (dbg :coll-cords "Length: ~,4F~%" length)
+         (if (dbg-on-p :coll-cords)
+             (push (mapcar #'cord-length real-cords) *dbg-collapse-cords*))
+         (push (make-instance 'collapsed-cord
+                              :left collapsed-tree :right other-end
+                              :length length
+                              :real-cords (reduce #'append
+                                                  (mapcar #'real-cords
+                                                          real-cords)))
+               final-cords))
+    (nconc final-cords rest)))
+
 (defun ultrametric-lasso3 (cords)
   (assert (= 1 (length (components cords))))
   (let (tree
@@ -474,4 +518,30 @@ return just the mode."
                                                    c2))
                                (components cords) :initial-value nil))))
     tree))
+
+(defun ultrametric-lasso4 (cords)
+  (let (tree
+        (forest (make-instance 'queue :comparison #'> :key #'nleaves))
+        (cords (make-instance
+                'queue
+                :initial-contents (map 'vector #'collapsed-cord cords)
+                :comparison #'<
+                :key #'cord-length)))
+    (loop until (queue-empty-p cords)
+       for mins = (dequeue-top-to-list cords)
+       do
+         (dbg :lasso4 "Cords: ~A~%" cords)
+         (loop for component in (components mins) do
+              (setf tree (collapse (maxi-clique component)))
+              (enqueue tree forest)
+              (dbg :lasso4 "Tree used cords: ~A~%" (used-cords tree))
+              (when (dbg-on-p :lasso4)
+                (pp-tree-print tree :vertical t))
+              (setf cords (make-instance
+                           'queue
+                           :initial-contents
+                           (collapse-cords2 (slot-value cords 'array) tree)
+                           :comparison #'<
+                           :key #'cord-length))))
+    forest))
 
