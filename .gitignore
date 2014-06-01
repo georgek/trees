@@ -5,3 +5,4 @@
 *.fasl
 *.fas
 *.lib
+/lasso

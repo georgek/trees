@@ -13,4 +13,5 @@
                (:file "build")
                (:file "lasso")
                (:file "gamma-graph")
-               (:file "hamiltonian")))
+               (:file "hamiltonian")
+               (:file "cli")))
