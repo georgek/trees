@@ -12,5 +12,5 @@
               (format nil "SBCL_HOME=~A" #.(sb-ext:posix-getenv "SBCL_HOME")))
              (gk-trees:main sb-ext:*posix-argv*))
  :executable t
- :compression t)
+ :compression nil)
 
