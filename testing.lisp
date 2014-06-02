@@ -86,7 +86,7 @@
        (format t "   };~%   \\addlegendentry{~d}~%" degree)))
 
 (defun csv-to-cords (filename &key (limit most-positive-fixnum)
-                                (delimiter #\,) (labelled nil)
+                                (delimiter #\,) (labelled t)
                                 (truncate-labels nil))
   "Makes all (unique) cords from a CSV matrix file."
   (let ((cords (list))
