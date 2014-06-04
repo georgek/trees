@@ -102,7 +102,7 @@
             (aref (vals matrix) i j))))
 
 (defun csv-to-matrix (filename &key (limit most-positive-fixnum)
-                                 (delimiter #\,) (labelled nil)
+                                 (delimiter #\,) (labelled t)
                                  (truncate-labels nil)
                                  (multiplier 1))
   "Makes a matrix from csv file."
