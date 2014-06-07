@@ -656,6 +656,11 @@ letter of the name is used to define the colour."
           (cdr colour)
           (list 0 0 0))))))
 
+(defun make-colourmap-alist (alist)
+  "Makes a colourmap from an alist mapping leaf names to group numbers."
+  (lambda (name)
+    (cdr (assoc name alist :test #'equal))))
+
 (defun tikz-rgb-colour (rgb)
   "Converts list of three colour values to a TikZ RGB string."
   (if (every #'zerop rgb)
