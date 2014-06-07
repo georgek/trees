@@ -658,7 +658,9 @@ letter of the name is used to define the colour."
 
 (defun tikz-rgb-colour (rgb)
   "Converts list of three colour values to a TikZ RGB string."
-  (apply #'format nil "rgb:red,~D;green,~D;blue,~D" rgb))
+  (if (every #'zerop rgb)
+      "black"
+      (apply #'format nil "rgb:red,~D;green,~D;blue,~D" rgb)))
 
 (defun cluster-colour (colours)
   "Makes a cluster colours"
