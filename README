@@ -1,1 +1,16 @@
-Just some tools written for doing tree stuff
+While this should work with any ANSI compatible Common Lisp implementation,
+only SBCL is currently supported for making an executable.  SBCL is available
+as a package for most GNU/Linux distributions, or alternatively from the
+website: http://www.sbcl.org/
+
+With SBCL installed build the lasso program by running:
+
+./build.sh
+
+Now build a tree from the example dataset and write it (in Newick format) to
+output:
+
+./lasso paradoxus-part.csv > output
+
+The program can also print in a unicode text format with option -p, or in TikZ
+format for LaTeX by options -t or -T (the latter producing a polar tree).

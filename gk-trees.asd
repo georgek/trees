@@ -1,3 +1,5 @@
+(require :asdf)
+
 (asdf:defsystem "gk-trees"
   :description "Building trees stuff."
   :version "0.1"
