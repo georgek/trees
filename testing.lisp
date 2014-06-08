@@ -54,7 +54,7 @@
   (loop repeat n collecting
        (mess-up-conn2 cords rem vary)))
 
-(defparameter n-tests 500)
+(defparameter n-tests 100)
 
 (defun random-test (degree leaves)
   (let ((ncords (/ (* leaves (1- leaves)) 2)))
@@ -152,7 +152,7 @@
 (defun partial-rob-foulds (tree)
   (let* ((cords (tree-distances tree))
          (max-rf (* 2 (1- (length (leafset tree))))))
-    (format t "missing  mean      min      max     minc     maxc~%")
+    (format t "missing  mean      min      max     minc     maxc    meanc~%")
     (loop for rem in (list 0 1 5 10 20 30)
        for dists = (list)
        for ncords = (list)
@@ -161,19 +161,42 @@
             for ntree = (ultrametric-lasso3 (mess-up-conn cords (/ rem 100)))
             do
               (push (tree-distance tree ntree) dists)
-              (push (length (leafset ntree)) ncords))
-         (format t "~f  ~7,3f  ~7,3f  ~7,3f  ~7d  ~7d~%"
+              (push (length (lassoed-tree-used-cords ntree)) ncords))
+         (format t "~f  ~7,3f  ~7,3f  ~7,3f  ~7d  ~7d  ~7,3f~%"
                  rem
                  (/ (mean dists) max-rf)
                  (/ (reduce #'min dists) max-rf)
                  (/ (reduce #'max dists) max-rf)
                  (reduce #'min ncords)
-                 (reduce #'max ncords)))))
+                 (reduce #'max ncords)
+                 (mean ncords)))))
+
+(defun partial-rob-foulds-cords (cords amounts)
+  (let* ((tree (ultrametric-lasso3 cords))
+         (max-rf (* 2 (1- (length (leafset tree))))))
+    (format t "missing  mean      min      max     minc     maxc    meanc~%")
+    (loop for rem in amounts
+       for dists = (list)
+       for ncords = (list)
+       do
+         (loop repeat n-tests
+            for ntree = (ultrametric-lasso3 (mess-up-conn2 cords (/ rem 100)))
+            do
+              (push (tree-distance tree ntree) dists)
+              (push (length (lassoed-tree-used-cords ntree)) ncords))
+         (format t "~f  ~7,3f  ~7,3f  ~7,3f  ~7d  ~7d  ~7,3f~%"
+                 rem
+                 (/ (mean dists) max-rf)
+                 (/ (reduce #'min dists) max-rf)
+                 (/ (reduce #'max dists) max-rf)
+                 (reduce #'min ncords)
+                 (reduce #'max ncords)
+                 (mean ncords)))))
 
 (defun noisy-rob-foulds (tree)
   (let* ((cords (tree-distances tree))
          (max-rf (* 2 (1- (length (leafset tree))))))
-    (format t "noise   mean      min      max     minc     maxc~%")
+    (format t "noise   mean      min      max     minc     maxc    meanc~%")
     (loop for noise in (list 0 1 5 10 20 30)
        for dists = (list)
        for ncords = (list)
@@ -183,13 +206,14 @@
             do
               (push (tree-distance tree ntree) dists)
               (push (length (leafset ntree)) ncords))
-         (format t "~f  ~7,3f  ~7,3f  ~7,3f  ~7d  ~7d~%"
+         (format t "~f  ~7,3f  ~7,3f  ~7,3f  ~7d  ~7d  ~7,3f~%"
                  noise
                  (/ (mean dists) max-rf)
                  (/ (reduce #'min dists) max-rf)
                  (/ (reduce #'max dists) max-rf)
                  (reduce #'min ncords)
-                 (reduce #'max ncords)))))
+                 (reduce #'max ncords)
+                 (mean ncords)))))
 
 ;;; this test how many times a given cluster is present in a constructed tree
 (defun partial-cluster (cords rem cluster)
@@ -247,7 +271,7 @@
 ;;; combines two sets of cords across the same pairs of vertices into one set
 ;;; by taking the mean of the distance for each pair of cords, pairs of cords
 ;;; where the ratio between the distances is too high are removed
-(defun combine-cords (cords1 cords2)
+(defun combine-cords (cords1 cords2 &key (remove-outliers t))
   (let* ((factors (mapcar #'/
                           (mapcar #'cord-length cords1)
                           (mapcar #'cord-length cords2)))
@@ -259,9 +283,11 @@
        for cord1 in cords1
        for cord2 in cords2
        for factor in factors do
+         (format t "~A~%~A~%" cord1 cord2)
          (assert (cords-equal cord1 cord2 #'equal))
-         (unless (or (> factor (+ hq iqr))
-                     (< factor (- lq iqr)))
+         (unless (and remove-outliers
+                      (or (> factor (+ hq iqr))
+                          (< factor (- lq iqr))))
            (push (cord (cord-left cord1) (cord-right cord1)
                        (/ (+ (cord-length cord1) (cord-length cord2)) 2))
                  comb-cords)))
@@ -384,12 +410,12 @@
 
 (defun cord< (cord1 cord2)
   (or (string< (cord-left cord1) (cord-left cord2))
-      (string< (cord-right cord1) (cord-left cord2))))
+      (string< (cord-right cord1) (cord-right cord2))))
 
 (defun overlap-labels (n prefix)
   (mapcar (lambda (i) (format nil "~A~A" prefix i)) (range 1 n)))
 
-(defun two-matrix-tree2 (mat1 mat2 overlap1 overlap2)
+(defun two-matrix-tree2 (mat1 mat2 overlap1 overlap2 &key (remove-outliers t))
   (assert (= (length overlap1) (length overlap2)))
   (let ((mat1 (copy-matrix mat1))
         (mat2 (copy-matrix mat2))
@@ -400,6 +426,8 @@
                                (names mat1)))
     (setf (names mat2) (mapcar (label-to-biglabel-function overlap2 "B" overlap-labels)
                                (names mat2)))
+    (dbg :2mat "names1: ~A~%" (names mat1))
+    (dbg :2mat "names2: ~A~%" (names mat2))
     (dbg :2mat "Making cords...")
     (setf cords1 (matrix-to-cords mat1))
     (setf cords2 (matrix-to-cords mat2))
@@ -412,7 +440,8 @@
         (setf overlap-cords1 (sort overlap-cords1 #'cord<))
         (setf overlap-cords2 (sort overlap-cords2 #'cord<))
         (dbg :2mat "Combining overlap cords (~D)..." (length overlap-cords1))
-        (setf overlap-cords (combine-cords overlap-cords1 overlap-cords2))
+        (setf overlap-cords (combine-cords overlap-cords1 overlap-cords2
+                                           :remove-outliers remove-outliers))
         (dbg :2mat "Done (~D)." (length overlap-cords))
         (dbg :2mat "Building tree...")
         (ultrametric-lasso3 (nconc cords1 cords2 overlap-cords))
