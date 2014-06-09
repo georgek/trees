@@ -643,7 +643,7 @@ of this tree, CHILDREN-WIDTHS is a list of widths of each child."
           label
           deg
           (+ (* dist dist-mult) labdist)
-          (funcall leafmap tree)))
+          (texify-string (funcall leafmap tree))))
 
 (defun make-colourmap-leaf-letters (letters colours)
   "Makes a colourmap between list of letters and list of colours.  The initial
