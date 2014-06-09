@@ -1,3 +1,3 @@
 #!/bin/sh
 
-sbcl --load gk-trees.asd --load make-image.lisp
+${SBCL:-sbcl} --load gk-trees.asd --load make-image.lisp
