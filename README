@@ -1,3 +1,5 @@
+* Building
+
 While this should work with any ANSI compatible Common Lisp implementation,
 only SBCL is currently supported for making an executable.  SBCL is available
 as a package for most GNU/Linux distributions, or alternatively from the
@@ -7,6 +9,17 @@ With SBCL installed build the lasso program by running:
 
 ./build.sh
 
+If SBCL is not in your path, give its absolute path as follows:
+
+SBCL=/path/to/sbcl ./build.sh
+
+If you choose to use a binary from the SBCL website then you would give the
+name of the run script:
+
+SBCL=/path/to/sbcl/run-sbcl.sh
+
+* Running
+
 Now build a tree from the example dataset and write it (in Newick format) to
 output:
 
@@ -14,3 +27,37 @@ output:
 
 The program can also print in a unicode text format with option -p, or in TikZ
 format for LaTeX by options -t or -T (the latter producing a polar tree).
+
+To use the TikZ output, you require the TikZ package for LaTeX (included by
+default in most distributions).  Write the TikZ output into a file and include
+it in a LaTeX document.  Below is an example of including a normal tree and a
+polar tree.
+
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{tikz}
+
+\usetikzlibrary{calc}
+
+\begin{document}
+
+\begin{tikzpicture}[xscale=50,yscale=0.5]
+  \input{tree.tex}
+\end{tikzpicture}
+
+\begin{tikzpicture}[scale=5]
+  \input{tree-polar.tex}
+\end{tikzpicture}
+
+\end{document}
+
+Note the scale parameters for tikzpicture.  You will need to play around with
+these to make the picture look nice in your document.  If you need to change
+the size of the labels, use scalefont, e.g.:
+
+{\scalefont{0.3}
+\begin{tikzpicture}[scale=22]
+  \input{tree-polar.tex}
+\end{tikzpicture}
+}
+
