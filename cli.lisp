@@ -35,11 +35,11 @@
          (setf forest (ultrametric-lasso4 cords))
          (case output-mode
            (:pretty
-            (pp-tree-print (peek forest) :stream *standard-output*))
+            (pp-tree-print (canonicalise-tree (peek forest)) :stream *standard-output*))
            (:tikz
-            (tikz-tree-print (peek forest) *standard-output*))
+            (tikz-tree-print (canonicalise-tree (peek forest)) *standard-output*))
            (:tikz-polar
-            (tikz-tree-print-polar (peek forest) *standard-output*))
+            (tikz-tree-print-polar (canonicalise-tree (peek forest)) *standard-output*))
            (otherwise
             (tree-print (peek forest) *standard-output*))))
      (condition (err)
